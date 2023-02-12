@@ -1,17 +1,19 @@
 """hanldes operations relative to the UT dataset.
 https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 
-from typing import Union, List
 from pathlib import Path
+
 import zipfile
 import io
 import shutil
-import requests
-import yaml
 
+import requests
+from .utils.read_dataset_urls import read_dataset_urls
 
 class UTDataset:
-    def download(self, download_path: Path = Path("data/raw/utdataset")):
+    DEFAULT_PATH = Path("data/raw/utdataset")
+
+    def download(self, download_path: Path = DEFAULT_PATH):
         """Download and extract dataset from source.
 
         Parameters
@@ -20,7 +22,7 @@ class UTDataset:
             The path where to download the data.
         """
 
-        zip_file_urls = self.load_download_urls()
+        zip_file_urls = read_dataset_urls(key="UTDataset")
 
         for zip_file_url in zip_file_urls:
             response = requests.get(zip_file_url, timeout=1000)
@@ -32,25 +34,6 @@ class UTDataset:
         shutil.rmtree(download_path / "segmented_set2")
 
         self.create_labels(download_path)
-
-    def load_download_urls(self,
-                           urls_path: Union[Path, None] = None
-                           ) -> List[str]:
-        """Return the urls where to download the dataset from.
-
-        Parameters
-        ----------
-        - download_path (Path) :
-            The path where the data have been downloaded.
-        """
-
-        if urls_path is None:
-            urls_path = Path(__file__).parent / "download_urls.yaml"
-
-        with urls_path.open('r', encoding='utf8') as urls_file:
-            urls = yaml.safe_load(urls_file)
-
-        return urls["UTDataset"]
 
     def move_videos(self, download_path: Path):
         """The archive contains two subfolders and this function
