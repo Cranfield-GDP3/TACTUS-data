@@ -1,7 +1,7 @@
 """hanldes operations relative to the UT dataset.
 https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 
-from typing import Union
+from typing import Union, List
 from pathlib import Path
 import zipfile
 import io
@@ -12,11 +12,11 @@ import yaml
 
 class UTDataset:
     def download(self, download_path: Path = Path("data/raw/utdataset")):
-        """Download and extract violence dataset from kaggle.
+        """Download and extract dataset from source.
 
         Parameters
         ----------
-        - **download_path** (_Path_) :
+        - download_path (Path) :
             The path where to download the data.
         """
 
@@ -33,12 +33,14 @@ class UTDataset:
 
         self.create_labels(download_path)
 
-    def load_download_urls(self, urls_path: Union[Path, None] = None):
-        """return the urls where to download the dataset from
+    def load_download_urls(self,
+                           urls_path: Union[Path, None] = None
+                           ) -> List[str]:
+        """Return the urls where to download the dataset from.
 
         Parameters
         ----------
-        - **download_path** (_Path_) :
+        - download_path (Path) :
             The path where the data have been downloaded.
         """
 
@@ -51,11 +53,12 @@ class UTDataset:
         return urls["UTDataset"]
 
     def move_videos(self, download_path: Path):
-        """move every video from the subfolder to the parent folder
+        """The archive contains two subfolders and this function
+        move every video from the subfolders to the parent folder.
 
         Parameters
         ----------
-        - **download_path** (_Path_) :
+        - download_path (Path) :
             The path where the data have been downloaded.
         """
 
@@ -66,11 +69,13 @@ class UTDataset:
                       "pointing", "punching", "pushing"]
 
     def create_labels(self, download_path: Path):
-        """generate a label file from the name
+        """generate a label file from the name of the video
+        which contains: a sample number, a sequence number, and
+        the action number.
 
         Parameters
         ----------
-        - **download_path** (_Path_) :
+        - download_path (Path) :
             The path where the data have been downloaded.
         """
 
