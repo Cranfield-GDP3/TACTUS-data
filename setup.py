@@ -21,7 +21,8 @@ def get_version(rel_path: str) -> str:
 long_description = read("README.md")
 
 install_requires = [
-    
+    "requests",
+    "yaml"
 ]
 tests_require = [
     "pytest",
