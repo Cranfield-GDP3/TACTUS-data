@@ -1,5 +1,5 @@
 import os
-from setuptools import find_packages, setup
+from setuptools import setup
 
 
 def read(rel_path: str) -> str:
@@ -22,7 +22,8 @@ long_description = read("README.md")
 
 install_requires = [
     "requests",
-    "yaml"
+    "pyyaml",
+    "cython"
 ]
 tests_require = [
     "pytest",
@@ -37,10 +38,11 @@ extras_require = {
 }
 
 setup(
-    name="TACTUS - data",
-    version=get_version("src/__init__.py"),
+    name="TACTUS - data pipeline",
+    version=get_version("tactus_data/__init__.py"),
     description="Threatening activities classification toward users' security",
     long_description=long_description,
+    packages=['tactus_data'],
     classifiers=[
         "Development Status :: 5 - Beta",
         "Intended Audience :: Developers",
@@ -57,7 +59,6 @@ setup(
         "issues": "https://github/Cranfield-GDP3/TACTUS-data/issues",
     },
     python_requires=">=3.9",
-    packages=find_packages(where="."),
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require=extras_require,
