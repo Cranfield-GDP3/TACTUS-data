@@ -5,8 +5,29 @@
 </div>
 
 # Useful ressources
+
 - [Write a better commit message](https://gist.github.com/MarcBresson/dd57a17f2ae60b6cb8688ee64cd7671d)
 - [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/)
+
+# Installation
+
+## Hardware accelerated Torch
+
+You can install torch and torchvision **with cuda** via pip. Get the pip install command from [the official website](https://pytorch.org/get-started/locally/).
+
+## tactus-data
+
+You can create an editable install of this library ([see more](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)) with the following command:
+
+```bash
+python -m pip install -e .
+```
+
+The library will be added to your Python's import path and  you will be able to import this package from anywhere using
+
+```python
+import tactus_data
+```
 
 # Data sources
 
