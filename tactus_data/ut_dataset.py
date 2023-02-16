@@ -10,6 +10,7 @@ import shutil
 import requests
 from .utils.read_dataset_urls import read_dataset_urls
 
+
 class UTDataset:
     DEFAULT_PATH = Path("data/raw/utdataset")
 
