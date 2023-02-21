@@ -21,6 +21,8 @@ Downoad [AlphaPose](https://github.com/MVIG-SJTU/AlphaPose) on your machine with
 
 ```bash
 git clone https://github.com/MVIG-SJTU/AlphaPose.git
+cd AlphaPose
+python -m pip install -e .
 ```
 
 You will need the path of the alphapose folder which contains `scripts`, and `configs` subfolders.

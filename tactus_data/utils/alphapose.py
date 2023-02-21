@@ -2,13 +2,12 @@
 
 Usage:
 from pathlib import Path
-from tactus_data import skeleton_extraction
+from tactus_data import *
 
-alphapose_path = Path("C:\\...\\AlphaPose")
-input_dir = Path("C:\\...\\TACTUS-data\\data\\interim\\test")
-output_dir = Path("C:\\...\\TACTUS-data\\data\\processed\\test.json")
+input_dir = Path("C:\\Users\\marco\\Documents\\Cours\\Group Design Project - GPD\\TACTUS-data\\data\\interim\\test")
+output_dir = Path("C:\\Users\\marco\\Documents\\Cours\\Group Design Project - GPD\\TACTUS-data\\data\\processed\\test.json")
 
-skeleton_extraction(alphapose_path, input_dir, output_dir)
+alphapose_skeletonisation(input_dir, output_dir)
 """
 import os
 import sys
@@ -16,6 +15,8 @@ from pathlib import Path
 from typing import Literal
 from subprocess import Popen
 from contextlib import contextmanager
+
+import alphapose
 
 
 def model_weights_path(alphapose_path: Path):
@@ -55,7 +56,6 @@ def check_detector_weights_path(alphapose_path: Path,
 
 
 def alphapose_skeletonisation(
-        alphapose_path: Path,
         input_dir: Path,
         output_filepath: Path,
         detector: Literal["yolo", "yolox", "tracker"] = "yolo"
@@ -67,8 +67,6 @@ def alphapose_skeletonisation(
 
     Parameters
     ----------
-    alphapose_path : Path
-        The path to the root folder of the alphapose project
     input_dir : Path
         Input directory with all the images to extract skeletons from
     output_filepath : Path
@@ -76,6 +74,8 @@ def alphapose_skeletonisation(
     detector : Literal["yolo", "yolox", "tracker"], optional
         alphapose detector to use, by default "yolo"
     """
+    alphapose_path = Path(alphapose.__file__).parent.parent
+
     config_path = Path(alphapose_path, "configs", "coco", "resnet",
                        "256x192_res50_lr1e-3_1x.yaml")
     checkpoint_path = model_weights_path(alphapose_path)
