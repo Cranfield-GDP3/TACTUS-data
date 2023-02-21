@@ -54,14 +54,28 @@ def check_detector_weights_path(alphapose_path: Path,
                                  f"and place them in '{str(weights_path)}'."))
 
 
-def skeleton_extraction(alphapose_path: Path,
-                        input_dir: Path,
-                        output_filepath: Path,
-                        detector: Literal["yolo", "yolox", "tracker"] = "yolo"
-                        ):
-    """call the alphapose bash API, then place the file in the right place.
-    AlphaPose creates a 'alphapose-results.json' file which is renamed
-    according to the output_filepath value."""
+def alphapose_skeletonisation(
+        alphapose_path: Path,
+        input_dir: Path,
+        output_filepath: Path,
+        detector: Literal["yolo", "yolox", "tracker"] = "yolo"
+    ):
+    """
+    Call the alphapose bash API. AlphaPose will create a
+    'alphapose-results.json' file which is renamed accordingly to the
+    output_filepath value.
+
+    Parameters
+    ----------
+    alphapose_path : Path
+        The path to the root folder of the alphapose project
+    input_dir : Path
+        Input directory with all the images to extract skeletons from
+    output_filepath : Path
+        Path for the result JSON file outputed by alphapose
+    detector : Literal["yolo", "yolox", "tracker"], optional
+        alphapose detector to use, by default "yolo"
+    """
     config_path = Path(alphapose_path, "configs", "coco", "resnet",
                        "256x192_res50_lr1e-3_1x.yaml")
     checkpoint_path = model_weights_path(alphapose_path)
