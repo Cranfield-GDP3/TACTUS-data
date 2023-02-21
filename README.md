@@ -15,6 +15,21 @@
 
 You can install torch and torchvision **with cuda** via pip. Get the pip install command from [the official website](https://pytorch.org/get-started/locally/).
 
+## AlphaPose
+
+Downoad [AlphaPose](https://github.com/MVIG-SJTU/AlphaPose) on your machine with the follwing command:
+
+```bash
+git clone https://github.com/MVIG-SJTU/AlphaPose.git
+```
+
+You will need the path of the alphapose folder which contains `scripts`, and `configs` subfolders.
+
+install numpy<=1.24 because alphapose is not compatible with the last version of numpy.
+```
+python -m pip install numpy==1.23.5
+```
+
 ## tactus-data
 
 You can create an editable install of this library ([see more](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)) with the following command:
