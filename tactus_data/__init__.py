@@ -2,5 +2,5 @@
 # https://peps.python.org/pep-0440/
 __version__ = "0.0.0"
 
-from .ut_dataset import UTDataset
+from .datasets.ut_interaction import UTInteraction
 from .utils.alphapose import alphapose_skeletonisation

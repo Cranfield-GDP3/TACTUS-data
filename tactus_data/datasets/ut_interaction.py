@@ -1,4 +1,4 @@
-"""hanldes operations relative to the UT dataset.
+"""hanldes operations relative to the UT interaction dataset.
 https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 
 from pathlib import Path
@@ -8,11 +8,11 @@ import io
 import shutil
 
 import requests
-from .utils.read_dataset_urls import read_dataset_urls
+from tactus_data.utils.read_dataset_urls import read_dataset_urls
 
 
-class UTDataset:
-    DEFAULT_PATH = Path("data/raw/utdataset")
+class UTInteraction:
+    DEFAULT_PATH = Path("data/raw/ut_interaction")
 
     def download(self, download_path: Path = DEFAULT_PATH):
         """Download and extract dataset from source.
@@ -23,7 +23,7 @@ class UTDataset:
             The path where to download the data.
         """
 
-        zip_file_urls = read_dataset_urls(key="UTDataset")
+        zip_file_urls = read_dataset_urls(key="UTInteraction")
 
         for zip_file_url in zip_file_urls:
             response = requests.get(zip_file_url, timeout=1000)
