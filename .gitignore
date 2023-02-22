@@ -21,3 +21,6 @@ doc/source/generated
 .ipynb_checkpoints
 .install_jupyter
 *.ipynb
+
+# Miss
+.idea
