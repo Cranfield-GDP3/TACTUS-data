@@ -15,12 +15,13 @@ class UTInteraction:
     DEFAULT_PATH = Path("data/raw/ut_interaction")
 
     def download(self, download_path: Path = DEFAULT_PATH):
-        """Download and extract dataset from source.
+        """
+        Download and extract dataset from source.
 
         Parameters
         ----------
-        - download_path (Path) :
-            The path where to download the data.
+        download_path : Path, optional
+            The path where to download the data, by default DEFAULT_PATH
         """
 
         zip_file_urls = read_dataset_urls(key="UTInteraction")
@@ -37,13 +38,14 @@ class UTInteraction:
         self.create_labels(download_path)
 
     def move_videos(self, download_path: Path):
-        """The archive contains two subfolders and this function
-        move every video from the subfolders to the parent folder.
+        """
+        The archive contains two subfolders and this function move every
+        video from the subfolders to the parent folder.
 
         Parameters
         ----------
-        - download_path (Path) :
-            The path where the data have been downloaded.
+        download_path : Path, optional
+            The path where the data have been downloaded, by default DEFAULT_PATH
         """
 
         for video_path in download_path.glob("*/*.avi"):
@@ -53,14 +55,14 @@ class UTInteraction:
                       "pointing", "punching", "pushing"]
 
     def create_labels(self, download_path: Path):
-        """generate a label file from the name of the video
-        which contains: a sample number, a sequence number, and
-        the action number.
+        """
+        generate a label file from the name of the video which contains:
+        a sample number, a sequence number, and the action number.
 
         Parameters
         ----------
-        - download_path (Path) :
-            The path where the data have been downloaded.
+        download_path : Path, optional
+            The path where the data have been downloaded, by default DEFAULT_PATH
         """
 
         for video_path in download_path.glob("*.avi"):
