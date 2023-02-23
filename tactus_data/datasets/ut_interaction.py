@@ -35,23 +35,7 @@ class UTInteraction:
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_response:
                 zip_response.extractall(download_dir)
 
-        self.move_videos(download_dir)
-        shutil.rmtree(download_dir / "segmented_set1")
-        shutil.rmtree(download_dir / "segmented_set2")
-
-    def move_videos(self, download_dir: Path):
-        """
-        The archive contains two subfolders and this function move every
-        video from the subfolders to the parent folder.
-
-        Parameters
-        ----------
-        download_dir : Path
-            The path where the data have been downloaded
-        """
-
-        for video_path in download_dir.glob("*/*.avi"):
-            video_path.rename(download_dir / video_path.name)
+        self._move_videos(download_dir)
 
     def extract_frames(
             self,
@@ -75,8 +59,8 @@ class UTInteraction:
             The fps we want to have, by default 10
         """
         for video_path in download_dir.glob("*.avi"):
-            label = self.label_from_path(video_path)
-            uid = self.uid_from_path(video_path)
+            label = self._label_from_path(video_path)
+            uid = self._uid_from_path(video_path)
 
             frame_output_dir = (output_dir
                                 / label
@@ -86,7 +70,24 @@ class UTInteraction:
     ACTION_INDEXES = ["neutral", "neutral", "kicking",
                       "neutral", "punching", "pushing"]
 
-    def label_from_path(self, video_path: Path) -> str:
+    def _move_videos(self, download_dir: Path):
+        """
+        The archive contains two subfolders and this function move every
+        video from the subfolders to the parent folder.
+
+        Parameters
+        ----------
+        download_dir : Path
+            The path where the data have been downloaded
+        """
+
+        for video_path in download_dir.glob("*/*.avi"):
+            video_path.rename(download_dir / video_path.name)
+
+        shutil.rmtree(download_dir / "segmented_set1")
+        shutil.rmtree(download_dir / "segmented_set2")
+
+    def _label_from_path(self, video_path: Path) -> str:
         """
         Extract the label from the video name.
 
@@ -105,7 +106,7 @@ class UTInteraction:
 
         return label
 
-    def uid_from_path(self, video_path: Path) -> str:
+    def _uid_from_path(self, video_path: Path) -> str:
         """
         Compute an unique id from the path.
 
