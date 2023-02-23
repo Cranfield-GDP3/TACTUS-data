@@ -6,31 +6,32 @@ The interim folder is organised as follows:
 ```
 . (interim)
 │
-├── Kicking
+├── kicking
 │   │   # videos with individual actions
-│   ├── sequence_1 5_fps 11_frames
-│   │   ├── 1.jpg
-│   │   ├── 2.jpg
+│   ├── ut_interaction 01_11 5_fps
+│   │   ├── 01.jpg
+│   │   ├── 06.jpg
+│   │   ├── ...
+│   │   └── 56.jpg
+│   ├── ut_interaction 01_11 10_fps
 │   │   └── ...
-│   ├── sequence_1 10_fps 22_frames
-│   │   └── ...
-│   ├── sequence_2 5_fps 14_frames
+│   ├── ut_interaction 02_11 5_fps
 │   │   └── ...
 │   └── ...
 │
-├── Neutral
+├── neutral
 │   │   # videos with individual neutral actions
 │   └── ...
 │
-├── Continuous
+├── continuous
 │   │   # long videos with multiple actions
-│   ├── sequence_1 5_fps 1245_frames
+│   ├── hockey_violence 001 5_fps
 │   │   ├── labels.json
 │   │   │   # labels in the form of a list
-│   │   ├── 1.jpg
-│   │   ├── 2.jpg
+│   │   ├── 0001.jpg
+│   │   ├── 0006.jpg
 │   │   └── ...
-│   ├── sequence_1 10_fps 2490_frames
+│   ├── hockey_violence 001 10_fps
 │   │   └── ...
 │   └── ...
 │
