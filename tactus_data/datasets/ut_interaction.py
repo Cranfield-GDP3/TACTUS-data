@@ -61,8 +61,8 @@ class UTInteraction:
             The fps we want to have, by default 10
         """
         for video_path in download_dir.glob("*.avi"):
-            label = self._label_from_path(video_path)
-            uid = self._uid_from_path(video_path)
+            label = self._label_from_video_name(video_path.stem)
+            uid = self._uid_from_video_name(video_path.stem)
 
             frame_output_dir = (output_dir
                                 / label
@@ -98,40 +98,40 @@ class UTInteraction:
         shutil.rmtree(download_dir / "segmented_set1")
         shutil.rmtree(download_dir / "segmented_set2")
 
-    def _label_from_path(self, video_path: Path) -> str:
+    def _label_from_video_name(self, video_name: str) -> str:
         """
         Extract the label from the video name.
 
         Parameters
         ----------
-        video_path : Path
-            The path of the video to extract a label from.
+        video_name : str
+            The name of the video to extract a label from.
 
         Returns
         -------
         str :
             the corresponding label
         """
-        _, _, action = video_path.stem.split("_")
+        _, _, action = video_name.split("_")
         label = self.ACTION_INDEXES[int(action)]
 
         return label
 
-    def _uid_from_path(self, video_path: Path) -> str:
+    def _uid_from_video_name(self, video_name: str) -> str:
         """
-        Compute an unique id from the path.
+        Compute an unique id from the video name.
 
         Parameters
         ----------
-        video_path : Path
-            The path of the video to extract a label from.
+        video_name : str
+            The name of the video to extract a uid from.
 
         Returns
         -------
         str :
             unique id for the video in the dataset
         """
-        sample_number, sequence_number, _ = video_path.stem.split("_")
+        sample_number, sequence_number, _ = video_name.split("_")
         unique_id = f"{sample_number.zfill(2)}_{sequence_number}"
 
         return unique_id
