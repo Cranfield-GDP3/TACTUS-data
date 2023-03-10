@@ -4,17 +4,20 @@ Usage:
 from pathlib import Path
 from tactus_data import *
 
-input_dir = Path("C:\\Users\\marco\\Documents\\Cours\\Group Design Project - GPD\\TACTUS-data\\data\\interim\\test")
+input_dir = Path("C:\\Users\\marco\\Documents\\Cours\\Group Design Project - GPD\\TACTUS-data\\data\\interim\\ut_interaction\\0_1_4\\")
 output_dir = Path("C:\\Users\\marco\\Documents\\Cours\\Group Design Project - GPD\\TACTUS-data\\data\\processed\\test.json")
 
 alphapose_skeletonisation(input_dir, output_dir)
 """
 import os
 import sys
+import json
+import shutil
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Tuple
 from subprocess import Popen
 from contextlib import contextmanager
+from PIL import Image
 
 import alphapose
 
@@ -94,8 +97,92 @@ def alphapose_skeletonisation(
         Popen(f"{sys.executable} {' '.join(arguments)}").wait()
 
     result_file = output_filepath.with_suffix('') / "alphapose-results.json"
-    result_file.replace(output_filepath)
+    resolution = directory_resolution(input_dir)
+    json_formatter(result_file, output_filepath, resolution)
 
+    shutil.rmtree(output_filepath.with_suffix(''))
+
+
+def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, int]):
+    """
+    convert the json output of alphapose to a standard format for this project.
+    The standard format follows this example:
+
+    {
+        "resolution": [324,218],
+        "frames": [
+            {
+                "id":"003.jpg",
+                "skeletons":[
+                    {"id":0, "keypoints": [0.1, 0.025, 0.45, "..."]},
+                    {"id":1, "keypoints": [0.78, 0.452, 0.123, "..."]},
+                    {"id":3, "keypoints": [0.45, 0.867, 0.56, "..."]}
+                ]
+            },
+            {
+                "frame":"006.jpg",
+                "skeletons":[
+                    "..."
+                ]
+            },
+            "..."
+        ]
+    }
+
+    Parameters
+    ----------
+    input_json : Path
+        the path to the output json of alphapose
+    output_json : Path
+        the path to where to save the new json
+    resolution : List[int, int]
+        the resolution of the video
+    """
+    alphapose_json = json.load(input_json.open())
+
+    processed_frames = []
+    standard_json = {"resolution": resolution,
+                     "frames": [],}
+
+    for skeleton in alphapose_json:
+        frame_id = skeleton["image_id"]
+
+        if not frame_id in processed_frames:
+            processed_frames.append(frame_id)
+
+            new_frame = {"id": frame_id, "skeletons": []}
+            standard_json["frames"].append(new_frame)
+
+        new_skeleton = {"keypoints": skeleton["keypoints"],
+                        "score": skeleton["score"],
+                        "box": skeleton["box"],
+                        "id": skeleton["idx"],}
+        standard_json["frames"][-1]["skeletons"].append(new_skeleton)
+
+    json.dump(standard_json, output_json.open(mode='w'))
+
+
+def directory_resolution(directory: Path):
+    """
+    Extract the resolution of video from the directory path of all the
+    extracted images of the video.
+
+    Parameters
+    ----------
+    directory : Path
+        The directory of all the extracted images.
+
+    Returns
+    -------
+    Tuple[int, int]
+        the resolution
+    """
+    print(directory)
+    for image_path in directory.glob("*.jpg"):
+        img = Image.open(image_path)
+        resolution = img.size
+        break
+    return resolution
 
 def quote(path: Path) -> str:
     """encapsulate a path inside double quotes"""
