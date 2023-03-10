@@ -9,7 +9,6 @@ import shutil
 
 import requests
 from tactus_data.utils.read_dataset_urls import read_dataset_urls
-from tactus_data.utils.interim_name_convention import interim_name_convention
 from tactus_data.utils.video_to_img import extract_frames as video_to_images
 from tactus_data.utils.alphapose import alphapose_skeletonisation
 
@@ -61,12 +60,9 @@ class UTInteraction:
             The fps we want to have, by default 10
         """
         for video_path in download_dir.glob("*.avi"):
-            label = self._label_from_video_name(video_path.stem)
-            uid = self._uid_from_video_name(video_path.stem)
-
             frame_output_dir = (output_dir
-                                / label
-                                / interim_name_convention(self.NAME, uid, desired_fps))
+                                / self.NAME
+                                / video_path.stem)
             video_to_images(video_path, frame_output_dir, desired_fps)
 
     def extract_skeletons(
