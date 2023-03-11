@@ -42,7 +42,8 @@ def plot_skeleton2D(path_json : Path,
     plt.show()
 
 
-def D2_flip_H(path_file : Path, path_output : Path):
+def D2_flip_H(path_file : Path,
+              path_output : Path):
     """
     Duplicate skeleton json data and flip horizontally one of the file.
 
