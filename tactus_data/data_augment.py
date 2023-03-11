@@ -5,6 +5,42 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 import random
+from enum import Enum
+
+
+
+
+def plot_skeleton2D(path_json : Path,
+                    path_frame : Path
+                    ):
+    """
+    Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
+
+    Parameters
+    ----------
+    path_json : Path, path where the json file is located
+    path_frame : Path, path where the frame file is located
+
+
+    Example of Path input : "C:/Users/alcharyx/TACTUS-data/data/ut-interaction"
+    """
+
+    file = open(str(path_json))
+    data = json.load(file)
+
+    keypoints = data['frames'][0]['skeletons'][0]['keypoints']
+    keypoints_x = []
+    keypoints_y = []
+    confidence = []
+    for i in range(0, len(keypoints), 3):
+        keypoints_x.append(keypoints[i])
+        keypoints_y.append(keypoints[i + 1])
+        confidence.append(keypoints[i + 2])
+    img = np.asarray(Image.open(str(path_frame)))
+    plt.imshow(img)
+    plt.scatter(keypoints_x, keypoints_y)
+    plt.show()
+
 
 def D2_flip_H(path_file : Path, path_output : Path):
     """
