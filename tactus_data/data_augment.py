@@ -68,7 +68,7 @@ def D2_flip_H(path_file : Path,
     path_file : Path, path where the original json files are located
     path_output : Path, path where the new generated data are saved
 
-    Working directory is expected to be **/TACTUS-data
+
     Example of Path input : "C:/Users/alcharyx/TACTUS-data/data/ut-interaction"
     """
     list_files = Path.iterdir(path_file)
@@ -121,7 +121,6 @@ def _Rotate_center(keypoints : list,
     resolution
     center_of_rotation : tuple, allow to compute the center or rotation for the skeleton, use BodyKeypoints
     class as reference, will do the center value among all the keypoint coordinates in the tuple
-
     """
 
     # Compute skeleton center of rotation depending on center_of_rotation parameter
@@ -187,7 +186,6 @@ def D2_Rotation(path_file : Path,
     rotate_center : tuple, allow to compute the center or rotation for the skeleton, use BodyKeypoints
     class as reference, will do the center value among all the keypoint coordinates in the tuple
 
-    Working directory is expected to be **/TACTUS-data
     Example of Path input : "C:/Users/alcharyx/TACTUS-data/data/ut-interaction"
     """
 
