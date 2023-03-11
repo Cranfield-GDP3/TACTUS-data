@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -219,7 +218,54 @@ def D2_Rotation(path_file : Path,
             with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(i) + ".json", 'w') as outfile:
                 json.dump(rotated_data, outfile)
 
+def D2_noise(path_file : Path,
+             path_output : Path,
+             num_copy : int = 3,
+             noise_magnitude : float = 4.0):
+    """
+    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise to each keypoints
+    coordinates depending on noise_magnitude parameter
+
+    Parameters
+    ----------
+    path_file : Path, path where the original json files are located
+    path_output : Path, path where the new generated data are saved
+    num_copy : int, number of copy to make with slight rotation until it reaches max_angle
+    noise_magnitude : float, coefficient the random nosie between 0 and 1 is multiplied by
+
+    Example of Path input : "C:/Users/alcharyx/TACTUS-data/data/ut-interaction"
+    """
+    list_files = Path.iterdir(path_file)
+    # Loop into all the json file we want to augment
+    for file_path in list_files:
+        file = open(str(file_path))
+        data = json.load(file)
+        file_name = file_path.name
+        file.close()
+
+        num_frame = len(data['frames'])
+        # i loop to generate the num_copy of random noise
+        for i in range(num_copy):
+            noisy_data = data
+            # j loop to go into all frames per video
+            for j in range(0,num_frame):
+                # k loop to go into all skeletons per frame
+                for k in range(len(noisy_data['frames'][j]['skeletons'])):
+                    # l loop to go into all keypoints per skeleton, 17 keypoints each composed of x,y,confidence
+                    for l in range(5, len(noisy_data['frames'][j]['skeletons'][k]['keypoints'])): #not changing face keypoints
+                        noisy_data['frames'][j]['skeletons'][k]['keypoints'][l] =\
+                            noisy_data['frames'][j]['skeletons'][k]['keypoints'][l] + \
+                            noise_magnitude * random.random() * random.choice([-1, 1]) #random add or substract
+
+            # Generate noisy json in output folder
+            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_noise" + str(i) + ".json",
+                      'w') as outfile:
+                json.dump(noisy_data, outfile)
+        with open(str(path_output) + "\\" + str(file_name),'w') as outfile:
+            json.dump(data, outfile)
+
 # Test functions
 #D2_Rotation(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/Rotation"))
-#plot_skeleton2D(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/Rotation/test_2_skeleton_051_Rotated3.json"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/051.jpg"))
+#D2_noise(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment"),3,7.0)
+#plot_skeleton2D(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment/test_2_skeleton_051_Noise2.json"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/051.jpg"))
 
