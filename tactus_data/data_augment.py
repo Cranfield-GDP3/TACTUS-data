@@ -169,10 +169,10 @@ def _Rotate_center(keypoints : list,
 
 
 def D2_Rotation(path_file : Path,
-                path_output : Path,
+                path_output: Path,
                 max_angle: float = 10.0,
-                num_copy : int = 3,
-                rotate_center : tuple = (BodyKeypoints.LAnkle, BodyKeypoints.RAnkle)):
+                num_copy: int = 3,
+                rotate_center:  tuple = (BodyKeypoints.LAnkle, BodyKeypoints.RAnkle)):
     """
     Generate 1 json per number of copy asked + the original one. Each copy is rotated more and more until it reaches the
     max_angle. You can pick where you want the center of rotation of the skeleton to be
@@ -216,8 +216,9 @@ def D2_Rotation(path_file : Path,
                                       angle=list_angle[i], resolution=shape, center_of_rotation= rotate_center)
 
             # Generate rotated json in output folder
-            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(i) + ".json", 'w') as outfile:
+            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(i) + ".json", 'w') as outfile: #remove str
                 json.dump(rotated_data, outfile)
+
 
 def D2_noise(path_file : Path,
              path_output : Path,
@@ -264,10 +265,4 @@ def D2_noise(path_file : Path,
                 json.dump(noisy_data, outfile)
         with open(str(path_output) + "\\" + str(file_name),'w') as outfile:
             json.dump(data, outfile)
-
-# Test functions
-
-#D2_Rotation(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/Rotation"))
-#D2_noise(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment"),3,7.0)
-#plot_skeleton2D(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment/test_2_skeleton_051_Noise2.json"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/051.jpg"))
 
