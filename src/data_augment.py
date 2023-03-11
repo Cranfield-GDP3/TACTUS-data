@@ -265,9 +265,3 @@ def D2_noise(path_file : Path,
         with open(str(path_output) + "\\" + str(file_name),'w') as outfile:
             json.dump(data, outfile)
 
-# Test functions
-
-#D2_Rotation(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/Rotation"))
-#D2_noise(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment"),3,7.0)
-#plot_skeleton2D(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment/test_2_skeleton_051_Noise2.json"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/051.jpg"))
-
