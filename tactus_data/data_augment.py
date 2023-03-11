@@ -42,6 +42,7 @@ def plot_skeleton2D(path_json : Path,
 
     file = open(str(path_json))
     data = json.load(file)
+    file.close()
 
     keypoints = data['frames'][0]['skeletons'][0]['keypoints']
     keypoints_x = []
@@ -77,10 +78,10 @@ def D2_flip_H(path_file : Path,
         file = open(str(file_path))
         data = json.load(file)
         file_name = file_path.name
-
+        file.close()
         # Get resolution + frames data
         shape = data['resolution']
-        file.close()
+
         num_frame = len(data['frames'])
         flip_data = data
 
@@ -209,7 +210,7 @@ def D2_Rotation(path_file : Path,
             # j loop to go into all frames per video
             for j in range(0, num_frame):
                 # k loop to go into all skeletons per frame
-                for k in range(len(rotated_data['frames'][j]['skeletons'])): # Look for upgrade with enumerate
+                for k in range(len(rotated_data['frames'][j]['skeletons'])):
                     rotated_data['frames'][j]['skeletons'][k]['keypoints'] = \
                         _Rotate_center(keypoints=rotated_data['frames'][j]['skeletons'][k]['keypoints'],
                                       angle=list_angle[i], resolution=shape, center_of_rotation= rotate_center)
@@ -265,6 +266,7 @@ def D2_noise(path_file : Path,
             json.dump(data, outfile)
 
 # Test functions
+
 #D2_Rotation(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/Rotation"))
 #D2_noise(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/original"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment"),3,7.0)
 #plot_skeleton2D(Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/noise_augment/test_2_skeleton_051_Noise2.json"),Path("D:/Documents/Cranfield/GDP/TACTUS-data/data/test_skeleton/051.jpg"))
