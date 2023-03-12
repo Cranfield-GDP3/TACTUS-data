@@ -150,7 +150,7 @@ def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, i
         if not frame_id in processed_frames:
             processed_frames.append(frame_id)
 
-            new_frame = {"id": frame_id, "skeletons": []}
+            new_frame = {"frame_id": frame_id, "skeletons": []}
             standard_json["frames"].append(new_frame)
 
         new_skeleton = {"keypoints": skeleton["keypoints"],
