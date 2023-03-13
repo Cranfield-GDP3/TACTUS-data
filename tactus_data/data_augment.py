@@ -249,6 +249,18 @@ def noise_2d(path_file: Path,
                           'w') as outfile:
                     json.dump(noisy_data, outfile)
 
+def _center_after_scaling(keypoints: list,
+                          resolution: list,
+                          factor: float):
+    res_center = [x * 2 for x in resolution]
+    d_center = [keypoints[BodyKeypoints["Nose"].value] - res_center[0], (
+            keypoints[BodyKeypoints["Nose"].value + 1] - res_center[1])]
+    new_d_center = [x * factor for x in d_center]
+    diff_d_center = [new_d_center[0] - keypoints[0], new_d_center[1] - keypoints[1]]
+    for i in range(0, len(keypoints) - 1, 3):
+        keypoints[i] = keypoints[i] - diff_d_center[0]
+        keypoints[i + 1] = keypoints[i + 1] - diff_d_center[1]
+    return keypoints
 
 def _uniform_scale(keypoints: list,
                    distance_change: float,
@@ -269,15 +281,7 @@ def _uniform_scale(keypoints: list,
         scale_keypoints.append(keypoints[i]*factor)
         scale_keypoints.append(keypoints[i+1] * factor)
         scale_keypoints.append(keypoints[i+2])
-    # Center
-    res_center = [x * 2 for x in resolution]
-    d_center = [keypoints[BodyKeypoints["Nose"].value] - res_center[0], (
-                            keypoints[BodyKeypoints["Nose"].value+1] - res_center[1])]
-    new_d_center = [x * factor for x in d_center]
-    diff_d_center = [new_d_center[0] - scale_keypoints[0], new_d_center[1] - scale_keypoints[1]]
-    for i in range(0, len(scale_keypoints)-1, 3):
-        scale_keypoints[i] = scale_keypoints[i] - diff_d_center[0]
-        scale_keypoints[i+1] = scale_keypoints[i+1] - diff_d_center[1]
+    scale_keypoints = _center_after_scaling(scale_keypoints, resolution, factor)
     return scale_keypoints
 
 
@@ -332,8 +336,10 @@ def camera_distance_2d(path_file: Path,
         else:
             print(str(file_name).strip(".json") + "_scale" + str(distance) + "is out of frame")
 
+
 def anthropomorphic_scale(factor: float,
                           keypoints: list):
+    factor = 1
 
 
 def skeletons_scale():
