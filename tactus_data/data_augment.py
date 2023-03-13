@@ -91,7 +91,7 @@ def flip_h_2d(path_file: Path,
     augment_ok = True
     for file_path in list_files:
         file_name = file_path.name
-        with open(path_file) as file:
+        with open(file_path) as file:
             data = json.load(file)
         shape = data['resolution']
         num_frame = len(data['frames'])
@@ -185,7 +185,7 @@ def rotation_2d(path_file: Path,
     list_angle = np.linspace(0, rad_angle, num_copy + 1)  # start 0 to keep original
     for file_path in list_files:
         file_name = file_path.name
-        with open(path_file) as file:
+        with open(file_path) as file:
             data = json.load(file)
             resolution = data["resolution"]
         num_frame = len(data['frames'])
@@ -228,7 +228,7 @@ def noise_2d(path_file: Path,
     augment_ok = True
     for file_path in list_files:
         file_name = file_path.name
-        with open(path_file) as file:
+        with open(file_path) as file:
             data = json.load(file)
             resolution = data["resolution"]
         num_frame = len(data['frames'])
