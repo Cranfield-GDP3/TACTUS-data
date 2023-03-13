@@ -28,8 +28,27 @@ class BodyKeypoints(Enum):
     RAnkle = 16
 
 
+def _check_on_frame(keypoints: list,
+                    resolution: list) -> bool:
+    """
+    Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
+
+    Parameters
+    ----------
+    keypoints : list,
+                list of the new generated keypoints to check
+    resolution : list,
+                 list of [x,y] resolution of the original frame
+        """
+    flag_ok = True
+    for i in range(0, len(keypoints), 3):
+        if keypoints[i] > resolution[0] or keypoints[i] < 0 or keypoints[i+1] > resolution[1] or keypoints[i+1] < 0:
+            flag_ok = False
+    return flag_ok
+
+
 def plot_skeleton_2d(path_json: Path,
-                    path_frame: Path):
+                     path_frame: Path):
     """
     Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
 
@@ -69,6 +88,7 @@ def flip_h_2d(path_file: Path,
                   path where the new generated data are saved
     """
     list_files = Path.iterdir(path_file)
+    augment_ok = True
     for file_path in list_files:
         file_name = file_path.name
         with open(path_file) as file:
@@ -81,10 +101,9 @@ def flip_h_2d(path_file: Path,
                 for point in range(0, len(flip_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                         shape[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
-        with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_H_flip.json", 'w') as outfile:
-            json.dump(flip_data, outfile)
-        with open(str(path_output) + "\\" + str(file_name), 'w') as outfile:
-            json.dump(flip_data, outfile)
+        if augment_ok:
+            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_H_flip.json", 'w') as outfile:
+                json.dump(flip_data, outfile)
 
 
 def _rotate_center(keypoints: list,
@@ -161,23 +180,29 @@ def rotation_2d(path_file: Path,
     """
 
     list_files = Path.iterdir(path_file)
+    augment_ok = True
     rad_angle = np.radians(max_angle)
     list_angle = np.linspace(0, rad_angle, num_copy + 1)  # start 0 to keep original
     for file_path in list_files:
         file_name = file_path.name
         with open(path_file) as file:
             data = json.load(file)
+            resolution = data["resolution"]
         num_frame = len(data['frames'])
-        for angl in range(len(list_angle)):
+        for angl in range(1, len(list_angle)):
             rotated_data = data
-            for skeleton in range(0, num_frame):
-                for point in range(len(rotated_data['frames'][skeleton]['skeletons'])):
-                    rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'] = (
-                        _rotate_center(keypoints=rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'],
+            for frame in range(0, num_frame):
+                for skeleton in range(len(rotated_data['frames'][frame]['skeletons'])):
+                    rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'] = (
+                        _rotate_center(keypoints=rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'],
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
-            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(angl) + ".json",
-                      'w') as outfile:
-                json.dump(rotated_data, outfile)
+                    if not _check_on_frame(rotated_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
+                                           resolution):
+                        augment_ok = False
+            if augment_ok:
+                with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(angl) + ".json",
+                          'w') as outfile:
+                    json.dump(rotated_data, outfile)
 
 
 def noise_2d(path_file: Path,
@@ -200,10 +225,12 @@ def noise_2d(path_file: Path,
                       coefficient the random noise between 0 and 1 is multiplied by
     """
     list_files = Path.iterdir(path_file)
+    augment_ok = True
     for file_path in list_files:
         file_name = file_path.name
         with open(path_file) as file:
             data = json.load(file)
+            resolution = data["resolution"]
         num_frame = len(data['frames'])
         for copy in range(num_copy):
             noisy_data = data
@@ -214,9 +241,92 @@ def noise_2d(path_file: Path,
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                                 noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] +
                                 noise_magnitude * random.random() * random.choice([-1, 1]))
-            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_noise" + str(copy) + ".json",
-                      'w') as outfile:
-                json.dump(noisy_data, outfile)
-        with open(str(path_output) + "\\" + str(file_name), 'w') as outfile:
-            json.dump(data, outfile)
+                    if not _check_on_frame(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
+                                           resolution):
+                        augment_ok = False
+            if augment_ok:
+                with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_noise" + str(copy) + ".json",
+                          'w') as outfile:
+                    json.dump(noisy_data, outfile)
 
+
+def _uniform_scale(keypoints: list,
+                   distance_change: float,
+                   focal_length: float,
+                   resolution: list):
+    # 1/3" Type image sensor with 4:3 aspect ratio 4.8mm H * 3.6 mm V
+    sensor1_3 = [4.8, 3.6]
+    # Distance is arbitrarly 10 meters
+    # Scale
+    distance = 10
+    diagonal = np.sqrt(sensor1_3[0]*sensor1_3[0] + sensor1_3[1]*sensor1_3[1])
+    fov = 2 * np.arctan(diagonal / (2 * focal_length))
+    new_focal_length = focal_length * (distance/(distance + distance_change))
+    new_fov = 2 * np.arctan(diagonal / (2 * new_focal_length))
+    factor = new_fov / fov
+    scale_keypoints = []
+    for i in range(0, len(keypoints)-1, 3):
+        scale_keypoints.append(keypoints[i]*factor)
+        scale_keypoints.append(keypoints[i+1] * factor)
+        scale_keypoints.append(keypoints[i+2])
+    # Center
+    res_center = [x * 2 for x in resolution]
+    d_center = [keypoints[BodyKeypoints["Nose"].value] - res_center[0], (
+                            keypoints[BodyKeypoints["Nose"].value+1] - res_center[1])]
+    new_d_center = [x * factor for x in d_center]
+    diff_d_center = [new_d_center[0] - scale_keypoints[0], new_d_center[1] - scale_keypoints[1]]
+    for i in range(0, len(scale_keypoints)-1, 3):
+        scale_keypoints[i] = scale_keypoints[i] - diff_d_center[0]
+        scale_keypoints[i+1] = scale_keypoints[i+1] - diff_d_center[1]
+    return scale_keypoints
+
+
+def camera_distance_2d(path_file: Path,
+                       path_output: Path,
+                       distance: float,
+                       focal_length: float = 3.6):
+    """
+    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise to each keypoints
+    coordinates depending on noise_magnitude parameter
+
+    Parameters
+    ----------
+    path_file : Path,
+                path where the original json files are located
+    path_output : Path,
+                    path where the new generated data are saved
+    distance : float,
+               change the camera distance by a positive or negative number of meter to the scene
+               positive means closer negative means you go further don't put this value lower than -9
+    focal_length : float,
+                   The focal length of the camera in millimetres, it impacts the angle of view of the camera and
+                   will influence the change of scale compare to the distance. Here is a usual CCTV focal length
+                   with the angle of view of the camera:
+                    Focal Lenght / Angle of View / Clear view
+                    -   2.8 mm   /      108°     /    5 m
+                    -   3.6 mm   /      82.6°    /    8 m
+                    -   4.0 mm   /      38°      /   12 m
+                    -   6.0 mm   /      54°      /   18 m
+        """
+    list_files = Path.iterdir(path_file)
+    augment_ok = True
+    for file_path in list_files:
+        file_name = file_path.name
+        with open(file_path) as file:
+            data = json.load(file)
+            resolution = data["resolution"]
+        num_frame = len(data['frames'])
+        scaled_data = data
+        for frame in range(0, num_frame):
+            for skeleton in range(len(scaled_data['frames'][frame]['skeletons'])):
+                scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"] = (
+                    _uniform_scale(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
+                                   distance, focal_length, resolution))
+                if not _check_on_frame(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"], resolution):
+                    augment_ok = False
+        if augment_ok:
+            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_scale" + str(distance) + ".json",
+                      'w') as outfile:
+                json.dump(scaled_data, outfile)
+        else:
+            print(str(file_name).strip(".json") + "_scale" + str(distance) + "is out of frame")
