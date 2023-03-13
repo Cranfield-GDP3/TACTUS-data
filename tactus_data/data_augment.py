@@ -28,7 +28,7 @@ class BodyKeypoints(Enum):
     RAnkle = 16
 
 
-def plot_skeleton2d(path_json: Path,
+def plot_skeleton_2d(path_json: Path,
                     path_frame: Path):
     """
     Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
@@ -59,7 +59,7 @@ def plot_skeleton2d(path_json: Path,
     plt.show()
 
 
-def D2_flip_H(path_file: Path,
+def flip_h_2d(path_file: Path,
               path_output: Path):
     """
     Duplicate skeleton json data and flip horizontally one of the file.
@@ -96,7 +96,7 @@ def D2_flip_H(path_file: Path,
             json.dump(flip_data, outfile)
 
 
-def _Rotate_center(keypoints: list,
+def _rotate_center(keypoints: list,
                    angle: float,
                    center_of_rotation: tuple
                    ):
@@ -145,7 +145,7 @@ def _Rotate_center(keypoints: list,
     return decenter_keypoints
 
 
-def D2_Rotation(path_file: Path,
+def rotation_2d(path_file: Path,
                 path_output: Path,
                 max_angle: float = 10.0,
                 num_copy: int = 3,
@@ -182,15 +182,15 @@ def D2_Rotation(path_file: Path,
             rotated_data = data
             for skeleton in range(0, num_frame):
                 for point in range(len(rotated_data['frames'][skeleton]['skeletons'])):
-                    rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'] =(
-                        _Rotate_center(keypoints=rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'],
+                    rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'] = (
+                        _rotate_center(keypoints=rotated_data['frames'][skeleton]['skeletons'][point]['keypoints'],
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
             with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(angl) + ".json",
                       'w') as outfile:
                 json.dump(rotated_data, outfile)
 
 
-def D2_noise(path_file: Path,
+def noise_2d(path_file: Path,
              path_output: Path,
              num_copy: int = 3,
              noise_magnitude: float = 4.0):
@@ -224,7 +224,7 @@ def D2_noise(path_file: Path,
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                                 noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] +
-                                noise_magnitude * random.random() * random.choice([-1, 1]) )
+                                noise_magnitude * random.random() * random.choice([-1, 1]))
             with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_noise" + str(copy) + ".json",
                       'w') as outfile:
                 json.dump(noisy_data, outfile)
