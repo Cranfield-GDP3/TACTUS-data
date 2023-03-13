@@ -59,20 +59,43 @@ class UTInteraction:
         desired_fps : int, optional
             The fps we want to have, by default 10
         """
+        fps_folder_name = self._fps_folder_name(desired_fps)
+
         for video_path in download_dir.glob("*.avi"):
             frame_output_dir = (output_dir
                                 / self.NAME
+                                / fps_folder_name
                                 / video_path.stem)
             video_to_images(video_path, frame_output_dir, desired_fps)
 
     def extract_skeletons(
             self,
             interim_dir: Path = DEFAULT_INTERIM_DIR,
-            output_dir: Path = DEFAULT_PROCESSED_DIR
+            output_dir: Path = DEFAULT_PROCESSED_DIR,
+            fps: int = 10
         ):
-        for extracted_frames_dir in interim_dir.glob(f"*/{self.NAME} *"):
+        """
+        Extract skeletons from a folder containing video frames using alphapose.
+
+        Parameters
+        ----------
+        interim_dir : Path, optional
+            The folder containing the dataset folder,
+            by default DEFAULT_INTERIM_DIR
+        output_dir : Path, optional
+            the folder where the outputed file will be saved. Will be
+            under output_dir/dataset_name/fps/name.json,
+            by default DEFAULT_PROCESSED_DIR
+        fps : int, optional
+            the extraction frequency, by default 10
+        """
+        fps_folder_name = self._fps_folder_name(fps)
+
+        for extracted_frames_dir in interim_dir.glob(f"*/{self.NAME}/{fps_folder_name}/*"):
             output_filename = f"{extracted_frames_dir.stem}.json"
-            alphapose_skeletonisation(extracted_frames_dir.absolute(), output_dir.absolute() / output_filename)
+
+            alphapose_skeletonisation(extracted_frames_dir.absolute(),
+                                      output_dir.absolute() / fps_folder_name/ output_filename)
 
     ACTION_INDEXES = ["neutral", "neutral", "kicking",
                       "neutral", "punching", "pushing"]
@@ -131,3 +154,7 @@ class UTInteraction:
         unique_id = f"{sample_number.zfill(2)}_{sequence_number}"
 
         return unique_id
+
+    def _fps_folder_name(self, fps: int):
+        """return the name of the fps folder for a given fps value."""
+        return f"{fps}fps"
