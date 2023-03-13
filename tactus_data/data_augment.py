@@ -40,11 +40,8 @@ def plot_skeleton_2d(path_json: Path,
     path_frame : Path,
                  path where the frame file is located
     """
-
-    file = open(str(path_json))
-    data = json.load(file)
-    file.close()
-
+    with open(path_json) as file:
+        data = json.load(file)
     keypoints = data['frames'][0]['skeletons'][0]['keypoints']
     keypoints_x = []
     keypoints_y = []
@@ -53,7 +50,7 @@ def plot_skeleton_2d(path_json: Path,
         keypoints_x.append(keypoints[i])
         keypoints_y.append(keypoints[i + 1])
         confidence.append(keypoints[i + 2])
-    img = np.asarray(Image.open(str(path_frame)))
+    img = np.asarray(Image.open(path_frame))
     plt.imshow(img)
     plt.scatter(keypoints_x, keypoints_y)
     plt.show()
@@ -72,22 +69,16 @@ def flip_h_2d(path_file: Path,
                   path where the new generated data are saved
     """
     list_files = Path.iterdir(path_file)
-    # Loop into all the json file we want to augment
     for file_path in list_files:
-
-        file = open(str(file_path))
-        data = json.load(file)
         file_name = file_path.name
-        file.close()
-        # Get resolution + frames data
+        with open(path_file) as file:
+            data = json.load(file)
         shape = data['resolution']
-
         num_frame = len(data['frames'])
         flip_data = data
         for frame in range(0, num_frame):
             for skeleton in range(len(flip_data['frames'][frame]['skeletons'])):
                 for point in range(0, len(flip_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
-                    # 17 keypoints each composed of x,y,confidence
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                         shape[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
         with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_H_flip.json", 'w') as outfile:
@@ -149,7 +140,7 @@ def rotation_2d(path_file: Path,
                 path_output: Path,
                 max_angle: float = 10.0,
                 num_copy: int = 3,
-                rotate_center: tuple[int, int] = (BodyKeypoints.LAnkle, BodyKeypoints.RAnkle)):
+                rotate_center: tuple = (BodyKeypoints.LAnkle, BodyKeypoints.RAnkle)):
     """
     Generate 1 json per number of copy asked + the original one. Each copy is rotated more and more until it reaches the
     max_angle. You can pick where you want the center of rotation of the skeleton to be
@@ -173,10 +164,9 @@ def rotation_2d(path_file: Path,
     rad_angle = np.radians(max_angle)
     list_angle = np.linspace(0, rad_angle, num_copy + 1)  # start 0 to keep original
     for file_path in list_files:
-        file = open(str(file_path))
-        data = json.load(file)
         file_name = file_path.name
-        file.close()
+        with open(path_file) as file:
+            data = json.load(file)
         num_frame = len(data['frames'])
         for angl in range(len(list_angle)):
             rotated_data = data
@@ -211,10 +201,9 @@ def noise_2d(path_file: Path,
     """
     list_files = Path.iterdir(path_file)
     for file_path in list_files:
-        file = open(str(file_path))
-        data = json.load(file)
         file_name = file_path.name
-        file.close()
+        with open(path_file) as file:
+            data = json.load(file)
         num_frame = len(data['frames'])
         for copy in range(num_copy):
             noisy_data = data
@@ -230,3 +219,4 @@ def noise_2d(path_file: Path,
                 json.dump(noisy_data, outfile)
         with open(str(path_output) + "\\" + str(file_name), 'w') as outfile:
             json.dump(data, outfile)
+
