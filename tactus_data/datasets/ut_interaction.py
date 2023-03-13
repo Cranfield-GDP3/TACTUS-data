@@ -91,11 +91,16 @@ class UTInteraction:
         """
         fps_folder_name = self._fps_folder_name(fps)
 
-        for extracted_frames_dir in interim_dir.glob(f"*/{self.NAME}/{fps_folder_name}/*"):
+        for extracted_frames_dir in interim_dir.glob(f"{self.NAME}/{fps_folder_name}/*"):
+            final_dir_name = extracted_frames_dir.stem
             output_filename = f"{extracted_frames_dir.stem}.json"
 
             alphapose_skeletonisation(extracted_frames_dir.absolute(),
-                                      output_dir.absolute() / fps_folder_name/ output_filename)
+                                      output_dir.absolute()
+                                        / self.NAME
+                                        / fps_folder_name
+                                        / final_dir_name
+                                        / output_filename)
 
     ACTION_INDEXES = ["neutral", "neutral", "kicking",
                       "neutral", "punching", "pushing"]
