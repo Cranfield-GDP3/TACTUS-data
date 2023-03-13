@@ -8,7 +8,6 @@ import io
 import shutil
 
 import requests
-from tactus_data.utils.read_dataset_urls import read_dataset_urls
 from tactus_data.utils.video_to_img import extract_frames as video_to_images
 from tactus_data.utils.alphapose import alphapose_skeletonisation
 
@@ -18,6 +17,11 @@ class UTInteraction:
     DEFAULT_RAW_DIR = Path(f"data/raw/{NAME}")
     DEFAULT_INTERIM_DIR = Path("data/interim/")
     DEFAULT_PROCESSED_DIR = Path("data/processed/")
+
+    DOWNLOAD_URL = [
+        "http://cvrc.ece.utexas.edu/SDHA2010/videos/competition_1/ut-interaction_segmented_set1.zip",
+        "http://cvrc.ece.utexas.edu/SDHA2010/videos/competition_1/ut-interaction_segmented_set2.zip"
+    ]
 
     def download(self, download_dir: Path = DEFAULT_RAW_DIR):
         """
@@ -29,9 +33,7 @@ class UTInteraction:
             The path where to download the data, by default DEFAULT_RAW_DIR
         """
 
-        zip_file_urls = read_dataset_urls(key="UTInteraction")
-
-        for zip_file_url in zip_file_urls:
+        for zip_file_url in self.DOWNLOAD_URL:
             response = requests.get(zip_file_url, timeout=1000)
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_response:
                 zip_response.extractall(download_dir)
