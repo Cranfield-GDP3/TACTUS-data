@@ -330,3 +330,24 @@ def camera_distance_2d(path_file: Path,
                 json.dump(scaled_data, outfile)
         else:
             print(str(file_name).strip(".json") + "_scale" + str(distance) + "is out of frame")
+
+def anthropomorphic_scale(factor: float,
+                          keypoints: list):
+
+
+def skeletons_scale():
+    """
+    Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
+    with different factors the goal is to create interaction with different size individual
+
+    Parameters
+    ----------
+    path_file : Path,
+                path where the original json files are located
+    path_output : Path,
+                  path where the new generated data are saved
+    max_factor : float,
+                 Max value of the size change factor
+    max_diff_factor : float,
+                      Maximum difference between the factor of all skeletons
+    """
