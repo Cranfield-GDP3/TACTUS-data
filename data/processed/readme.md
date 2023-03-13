@@ -7,21 +7,23 @@ The processed folder is organised as follows:
 . (processed)
 │
 ├── ut_interaction
-│   ├── 5fps
-│   │   └── ...
-│   └── 10fps
-│       ├── 0_1_4
-│       │   ├── 0_1_4.label.json
-│       │   ├── 0_1_4.json
-│       │   ├── 0_1_4 data_augment 1.json
-│       │   ├── 0_1_4 data_augment 2.json
-│       │   ├── 0_1_4 data_augment 3.json
+│   ├── 0_1_4
+│   │   ├── labels.json
+│   │   └── 10fps
+│   │   │  ├── alphapose_2d.json
+│   │   │  ├── alphapose_2d data_augment 1.json
+│   │   │  ├── alphapose_2d data_augment 2.json
+│   │   │  ├── alphapose_2d data_augment 3.json
+│   │   │  └── ...
+│   │   └── 5fps
+│   │      └── ...
+│   └── 0_11_4
+│       ├── labels.json
+│       ├── 10fps
+│       │   ├── alphapose_2d.json
 │       │   └── ...
-│       ├── 0_11_4
-│       │   ├── 0_11_4.label.json
-│       │   ├── 0_11_4.json
-│       │   └── ...
-│       └── ...
+│       └── 5fps
+│          └── ...
 └── ...
 ```
 
@@ -55,8 +57,6 @@ This structure doesn't come from alphapose nor any other pose extraction algorit
 ```
 
 ## label information
-
-For practicity purpose, resolution is duplicated here. This avoid loading to many large JSON files.
 
 ```json
 {

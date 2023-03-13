@@ -64,8 +64,8 @@ class UTInteraction:
         for video_path in download_dir.glob("*.avi"):
             frame_output_dir = (output_dir
                                 / self.NAME
-                                / fps_folder_name
-                                / video_path.stem)
+                                / video_path.stem
+                                / fps_folder_name)
             video_to_images(video_path, frame_output_dir, desired_fps)
 
     def extract_skeletons(
@@ -91,16 +91,15 @@ class UTInteraction:
         """
         fps_folder_name = self._fps_folder_name(fps)
 
-        for extracted_frames_dir in interim_dir.glob(f"{self.NAME}/{fps_folder_name}/*"):
-            final_dir_name = extracted_frames_dir.stem
-            output_filename = f"{extracted_frames_dir.stem}.json"
+        for extracted_frames_dir in interim_dir.glob(f"{self.NAME}/*/{fps_folder_name}"):
+            final_dir_name = extracted_frames_dir.parent.name
 
             alphapose_skeletonisation(extracted_frames_dir.absolute(),
                                       output_dir.absolute()
                                         / self.NAME
-                                        / fps_folder_name
                                         / final_dir_name
-                                        / output_filename)
+                                        / fps_folder_name
+                                        / "alphapose_2d.json")
 
     ACTION_INDEXES = ["neutral", "neutral", "kicking",
                       "neutral", "punching", "pushing"]
