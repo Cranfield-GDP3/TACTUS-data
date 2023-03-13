@@ -286,8 +286,9 @@ def camera_distance_2d(path_file: Path,
                        distance: float,
                        focal_length: float = 3.6):
     """
-    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise to each keypoints
-    coordinates depending on noise_magnitude parameter
+    Generate 1 json with a new scaling of skeletons. The distance parameter allows you to virtually move the camera
+    further or closer to the frame so that the scale change accordingly, distance is in meters the sign determines if
+    the camera goes closer(+) or further(-).
 
     Parameters
     ----------
