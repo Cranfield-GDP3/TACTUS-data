@@ -106,28 +106,7 @@ def alphapose_skeletonisation(
 def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, int]):
     """
     convert the json output of alphapose to a standard format for this project.
-    The standard format follows this example:
-
-    {
-        "resolution": [324,218],
-        "frames": [
-            {
-                "id":"003.jpg",
-                "skeletons":[
-                    {"id":0, "keypoints": [0.1, 0.025, 0.45, "..."]},
-                    {"id":1, "keypoints": [0.78, 0.452, 0.123, "..."]},
-                    {"id":3, "keypoints": [0.45, 0.867, 0.56, "..."]}
-                ]
-            },
-            {
-                "frame":"006.jpg",
-                "skeletons":[
-                    "..."
-                ]
-            },
-            "..."
-        ]
-    }
+    The standard format follows the example in `data/processed/readme.md`.
 
     Parameters
     ----------
