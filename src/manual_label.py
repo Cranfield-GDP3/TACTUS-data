@@ -102,7 +102,7 @@ def label_video_frame(path_file: Path,
             if key_press == "enter":
                 action_left=0
 
-        with open(str(path_output) + '\\' + vid_path.stem +'\\' + vid_path.stem + '_data.json', "w") as outfile:
+        with open(str(path_output) + '\\' + vid_path.stem +'\\' + vid_path.stem + '.label.json', "w") as outfile:
             json.dump(data_dic,outfile)
 
 
