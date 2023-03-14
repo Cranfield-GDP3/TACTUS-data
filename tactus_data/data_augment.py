@@ -249,6 +249,7 @@ def noise_2d(path_file: Path,
                           'w') as outfile:
                     json.dump(noisy_data, outfile)
 
+
 def _center_after_scaling(keypoints: list,
                           resolution: list,
                           factor: float):
@@ -273,7 +274,7 @@ def _uniform_scale(keypoints: list,
     distance = 10
     diagonal = np.sqrt(sensor1_3[0]*sensor1_3[0] + sensor1_3[1]*sensor1_3[1])
     fov = 2 * np.arctan(diagonal / (2 * focal_length))
-    new_focal_length = focal_length * (distance/(distance + distance_change))
+    new_focal_length = focal_length * (distance+distance_change)/distance
     new_fov = 2 * np.arctan(diagonal / (2 * new_focal_length))
     factor = new_fov / fov
     scale_keypoints = []
