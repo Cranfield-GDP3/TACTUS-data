@@ -8,7 +8,7 @@ import requests
 
 from tactus_data.datasets import dataset
 
-NAME = "ut_interaction"
+NAME = dataset.NAMES.ut_interaction
 
 DOWNLOAD_URL = [
     "http://cvrc.ece.utexas.edu/SDHA2010/videos/competition_1/ut-interaction_segmented_set1.zip",
@@ -36,10 +36,7 @@ def extract_frames(
     fps : int
         The fps we want to have
     """
-    input_dir = input_dir/ NAME
-    output_dir = output_dir / NAME
-
-    dataset.extract_frames(input_dir, output_dir, desired_fps, "avi")
+    dataset.extract_frames(NAME, input_dir, output_dir, desired_fps, "avi")
 
 
 def extract_skeletons(
@@ -62,10 +59,7 @@ def extract_skeletons(
     fps : int
         the fps of the extracted frames
     """
-    input_dir = input_dir / NAME
-    output_dir = output_dir / NAME
-
-    dataset.extract_skeletons(input_dir, output_dir, fps)
+    dataset.extract_skeletons(NAME, input_dir, output_dir, fps)
 
 
 def download(download_dir: Path = dataset.RAW_DIR):
