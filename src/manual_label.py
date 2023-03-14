@@ -116,14 +116,14 @@ def label_video_frame(path_file: Path,
 
 def mkdir(raw_dir: Path,
           target_dir: Path):
-    """
-        Automatically generate a corresponding video folder under the ut_interaction folder
+    """Automatically generate a corresponding video folder under
+    the ut_interaction folder
 
-        Parameters
-        ----------
-        raw_dir : Path, path where the raw video files are located
-        target_dir : Path, path where the folder with the corresponding video name should be saved
-        """
+    Parameters
+    ----------
+    raw_dir : Path, path where the raw video files are located
+    target_dir : Path, path where the folder with the corresponding video name should be saved
+    """
 
     listDir = os.listdir(raw_dir)
     for dir in listDir:
