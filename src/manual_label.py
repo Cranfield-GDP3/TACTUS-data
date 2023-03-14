@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import cv2
 import keyboard
-
+import os
 
 
 def _change_frame(current_frame: int,
@@ -111,8 +111,26 @@ def label_video_frame(path_file: Path,
                 action_left=0
 
         with open(str(path_output) + '\\' + vid_path.stem +'\\' + vid_path.stem + '.label.json', "w") as outfile:
-            json.dump(data_dic,outfile)
+            json.dump(data_dic,
+                      outfile)
 
+def mkdir(raw_dir: Path,
+          target_dir: Path):
+    """
+        Automatically generate a corresponding video folder under the ut_interaction folder
 
+        Parameters
+        ----------
+        raw_dir : Path, path where the raw video files are located
+        target_dir : Path, path where the folder with the corresponding video name should be saved
+        """
 
+    listDir = os.listdir(raw_dir)
+    for dir in listDir:
 
+        if os.path.isdir(dir) or 'new.py' == dir:
+            continue
+        dirName = os.path.splitext(dir)[0]
+        dirName = target_dir + '/' + dirName
+        if not os.path.exists(dirName):
+            os.mkdir(dirName)
