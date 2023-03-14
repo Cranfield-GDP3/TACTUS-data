@@ -1,7 +1,6 @@
 """hanldes operations relative to the UT interaction dataset.
 https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 
-from pathlib import Path
 import zipfile
 import io
 import requests
@@ -19,64 +18,38 @@ ACTION_INDEXES = ["neutral", "neutral", "kicking",
                   "neutral", "punching", "pushing"]
 
 
-def extract_frames(
-        input_dir: Path = dataset.RAW_DIR,
-        output_dir: Path = dataset.INTERIM_DIR,
-        desired_fps: int = 10,
-    ):
+def extract_frames(fps: int = 10):
     """
     Extract frame from a folder containing videos.
 
     Parameters
     ----------
-    input_dir : Path
-        The path to the dataset folder containing all the videos
-    output_dir : Path
-        The path to where to save the frames
     fps : int
         The fps we want to have
     """
-    dataset.extract_frames(NAME, input_dir, output_dir, desired_fps, "avi")
+    dataset.extract_frames(NAME, dataset.RAW_DIR, dataset.INTERIM_DIR, fps, "avi")
 
 
-def extract_skeletons(
-        input_dir: Path = dataset.INTERIM_DIR,
-        output_dir: Path = dataset.PROCESSED_DIR,
-        fps: int = 10,
-):
+def extract_skeletons(fps: int = 10):
     """
     Extract skeletons from a folder containing video frames using
     alphapose.
 
     Parameters
     ----------
-    input_dir : Path
-        The folder containing the dataset folder which contains
-        the extracted frames
-    output_dir : Path
-        the folder where the outputed file will be saved. Will be
-        under output_dir/dataset_name/fps/name.json
     fps : int
         the fps of the extracted frames
     """
-    dataset.extract_skeletons(NAME, input_dir, output_dir, fps)
+    dataset.extract_skeletons(NAME, dataset.INTERIM_DIR, dataset.PROCESSED_DIR, fps)
 
 
-def download(download_dir: Path = dataset.RAW_DIR):
-    """
-    Download and extract dataset from source.
-
-    Parameters
-    ----------
-    download_dir : Path, optional
-        The path where to download the data,
-        by default dataset.RAW_DIR
-    """
+def download():
+    """Download and extract dataset from source"""
     for zip_file_url in DOWNLOAD_URL:
         response = requests.get(zip_file_url, timeout=1000)
 
         with zipfile.ZipFile(io.BytesIO(response.content)) as zip_response:
-            zip_response.extractall(download_dir / NAME)
+            zip_response.extractall(dataset.RAW_DIR / NAME)
 
 
 def label_from_video_name(video_name: str) -> str:
