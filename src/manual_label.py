@@ -42,7 +42,6 @@ def _change_frame(current_frame: int,
 
 def label_video_frame(path_file: Path,
                       path_output: Path,
-                      label: str = "Neutral",
                       show_vid: bool = True,
                       ):
     """
@@ -55,6 +54,10 @@ def label_video_frame(path_file: Path,
     show_vid : bool, flag to enable video preview before manual classification
     """
 
+    # Temp code to identify label for ut-interaction
+    ACTION_INDEXES = ["neutral", "neutral", "kicking",
+                      "neutral", "punching", "pushing"]
+    # Temps code
 
     video_position = [500,500]
     list_files = Path.iterdir(path_file)
@@ -66,6 +69,11 @@ def label_video_frame(path_file: Path,
     for vid_path in list_vid:
         frame_vid = []
         vid = cv2.VideoCapture(str(vid_path))
+
+        # Temp code to identify label for ut-interaction
+        _, _, action = vid_path.stem.split("_")
+        label = ACTION_INDEXES[int(action)]
+        # Temp code
 
         while vid.isOpened():
             ret, frame = vid.read()
