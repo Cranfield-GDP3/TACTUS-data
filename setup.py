@@ -22,7 +22,6 @@ long_description = read("README.md")
 
 install_requires = [
     "requests",
-    "pyyaml",
     "cython"
 ]
 tests_require = [
