@@ -189,7 +189,7 @@ def rotation_2d(path_file: Path,
             data = json.load(file)
             resolution = data["resolution"]
         num_frame = len(data['frames'])
-        for angl in range(1, len(list_angle)):
+        for angl in range(1,len(list_angle)):
             rotated_data = data
             for frame in range(0, num_frame):
                 for skeleton in range(len(rotated_data['frames'][frame]['skeletons'])):
@@ -295,8 +295,8 @@ def camera_distance_2d(path_file: Path,
                        focal_length: float = 3.6):
     """
     Generate 1 json with a new scaling of skeletons. The distance parameter allows you to virtually move the camera
-    further or closer to the frame so that the scale change accordingly, distance is in meters the sign determines if
-    the camera goes closer(+) or further(-).
+    further or closer to the frame so that the scale change accordingly, distance is in meters represent the distance
+    added on the original position of the camera, if the camera goes closer(-) / further(+).
 
     Parameters
     ----------
@@ -306,7 +306,8 @@ def camera_distance_2d(path_file: Path,
                     path where the new generated data are saved
     distance : float,
                change the camera distance by a positive or negative number of meter to the scene
-               positive means closer negative means you go further don't put this value lower than -9
+               negative means closer positive means further. Don't put -10 as value since it will mean the camera is
+               inside of the picture (arbitrarly put at 10 meters)
     focal_length : float,
                    The focal length of the camera in millimetres, it impacts the angle of view of the camera and
                    will influence the change of scale compare to the distance. Here is a usual CCTV focal length
