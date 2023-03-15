@@ -1,8 +1,10 @@
 from pathlib import Path
 from enum import Enum
+import json
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.alphapose import alphapose_skeletonisation
+from tactus_data.utils.retracker import retrack
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -79,8 +81,12 @@ def extract_skeletons(
                                 / fps_folder_name
                                 / "alphapose_2d.json")
 
-        alphapose_skeletonisation(extracted_frames_dir,
-                                  skeletons_output_dir)
+        formatted_json = alphapose_skeletonisation(extracted_frames_dir,
+                                                 skeletons_output_dir)
+        tracked_json = retrack(input_dir, formatted_json)
+
+        with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
+            json.dump(tracked_json, fp)
 
 
 def _fps_folder_name(fps: int):

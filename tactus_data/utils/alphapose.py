@@ -73,7 +73,7 @@ def alphapose_skeletonisation(
     input_dir : Path
         Input directory with all the images to extract skeletons from
     output_filepath : Path
-        Path for the result JSON file outputed by alphapose
+        Path for the result JSON file
     detector : Literal["yolo", "yolox", "tracker"], optional
         alphapose detector to use, by default "yolo"
     """
@@ -96,28 +96,33 @@ def alphapose_skeletonisation(
         Popen(f"{sys.executable} {' '.join(arguments)}").wait()
 
     result_file = output_filepath.with_suffix('') / "alphapose-results.json"
-    resolution = directory_resolution(input_dir)
-    json_formatter(result_file, output_filepath, resolution)
-
+    alphapose_json = json.load(result_file.open())
     shutil.rmtree(output_filepath.with_suffix(''))
 
+    resolution = directory_resolution(input_dir)
 
-def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, int]):
+    formatted_json = json_formatter(alphapose_json, resolution)
+
+    return formatted_json
+
+
+def json_formatter(alphapose_json: list, resolution: Tuple[int, int]) -> dict:
     """
     convert the json output of alphapose to a standard format for this project.
     The standard format follows the example in `data/processed/readme.md`.
 
     Parameters
     ----------
-    input_json : Path
-        the path to the output json of alphapose
-    output_json : Path
-        the path to where to save the new json
+    alphapose_json : list
+        alphapose result dictionnary
     resolution : List[int, int]
         the resolution of the video
-    """
-    alphapose_json = json.load(input_json.open())
 
+    Returns
+    -------
+    dict
+        the formatted dictionnary
+    """
     processed_frames = []
     standard_json = {"resolution": resolution,
                      "frames": [],}
@@ -136,7 +141,7 @@ def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, i
                         "box": skeleton["box"],}
         standard_json["frames"][-1]["skeletons"].append(new_skeleton)
 
-    json.dump(standard_json, output_json.open(mode='w'))
+    return standard_json
 
 
 def directory_resolution(directory: Path):
