@@ -51,7 +51,7 @@ def _check_on_frame(keypoints: list,
 def plot_skeleton_2d(path_json: Path,
                      path_frame: Path):
     """
-    Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
+    Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different augment
 
     Parameters
     ----------
@@ -62,17 +62,37 @@ def plot_skeleton_2d(path_json: Path,
     """
     with open(path_json) as file:
         data = json.load(file)
-    keypoints = data['frames'][0]['skeletons'][0]['keypoints']
-    keypoints_x = []
-    keypoints_y = []
-    confidence = []
-    for i in range(0, len(keypoints), 3):
-        keypoints_x.append(keypoints[i])
-        keypoints_y.append(keypoints[i + 1])
-        confidence.append(keypoints[i + 2])
     img = np.asarray(Image.open(path_frame))
     plt.imshow(img)
-    plt.scatter(keypoints_x, keypoints_y)
+    for skeletons in data['frames'][0]['skeletons']:
+        keypoints = skeletons["keypoints"]
+        keypoints_x = []
+        keypoints_y = []
+        confidence = []
+        for i in range(0, len(keypoints), 3):
+            keypoints_x.append(keypoints[i])
+            keypoints_y.append(keypoints[i + 1])
+            confidence.append(keypoints[i + 2])
+
+        list_link =[(BK.RAnkle,BK.RKnee),
+                    (BK.LAnkle, BK.LKnee),
+                    (BK.RKnee, BK.RHip),
+                    (BK.LKnee, BK.LHip),
+                    (BK.RHip,BK.LHip),
+                    (BK.RHip,BK.RShoulder),
+                    (BK.LHip,BK.LShoulder),
+                    (BK.RShoulder,BK.LShoulder),
+                    (BK.RShoulder,BK.RElbow),
+                    (BK.RElbow,BK.RWrist),
+                    (BK.LShoulder,BK.LElbow),
+                    (BK.LElbow,BK.LWrist),
+                    (BK.Nose,BK.LEye),
+                    (BK.Nose,BK.REye),
+                    (BK.LEye,BK.LEar),
+                    (BK.REye,BK.REar)]
+        plt.scatter(keypoints_x, keypoints_y)
+        for i in list_link:
+            plt.plot([keypoints_x[i[0].value],keypoints_x[i[1].value]],[keypoints_y[i[0].value],keypoints_y[i[1].value]])
     plt.show()
 
 
