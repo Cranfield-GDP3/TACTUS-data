@@ -156,7 +156,6 @@ def directory_resolution(directory: Path):
     Tuple[int, int]
         the resolution
     """
-    print(directory)
     for image_path in directory.glob("*.jpg"):
         img = Image.open(image_path)
         resolution = img.size
