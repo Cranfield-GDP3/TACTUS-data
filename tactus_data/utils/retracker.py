@@ -70,7 +70,7 @@ def track_frame(
             continue
 
         at_least_one_tracked = True
-        track_ids.append(track.track_id)
+        track_ids.append(int(track.track_id))
 
     if not at_least_one_tracked:
         return False
