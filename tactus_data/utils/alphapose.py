@@ -89,9 +89,8 @@ def alphapose_skeletonisation(
                  "--cfg", quote(config_path),
                  "--checkpoint", quote(checkpoint_path),
                  "--detector", detector,
-                 "--indir", quote(input_dir),
-                 "--outdir", quote(output_filepath.with_suffix('')),
-                 "--pose_track"]
+                 "--indir", quote(input_dir.absolute()),
+                 "--outdir", quote(output_filepath.absolute().with_suffix(''))]
 
     with change_working_dir(alphapose_path):
         Popen(f"{sys.executable} {' '.join(arguments)}").wait()
@@ -134,8 +133,7 @@ def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, i
 
         new_skeleton = {"keypoints": skeleton["keypoints"],
                         "score": skeleton["score"],
-                        "box": skeleton["box"],
-                        "id_alphapose": skeleton["idx"],}
+                        "box": skeleton["box"],}
         standard_json["frames"][-1]["skeletons"].append(new_skeleton)
 
     json.dump(standard_json, output_json.open(mode='w'))
