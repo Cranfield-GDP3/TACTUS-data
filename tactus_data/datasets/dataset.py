@@ -1,6 +1,7 @@
 from pathlib import Path
 from enum import Enum
 import json
+import logging
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.alphapose import alphapose_skeletonisation
@@ -83,10 +84,13 @@ def extract_skeletons(
 
         formatted_json = alphapose_skeletonisation(extracted_frames_dir,
                                                  skeletons_output_dir)
-        tracked_json = retrack(input_dir, formatted_json)
 
-        with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
-            json.dump(tracked_json, fp)
+        try:
+            tracked_json = retrack(extracted_frames_dir, formatted_json)
+            with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
+                json.dump(tracked_json, fp)
+        except IndexError:
+            logging.warning("... discarding %s from %s", video_name, dataset.name)
 
 
 def _fps_folder_name(fps: int):

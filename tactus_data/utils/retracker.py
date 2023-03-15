@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Union
+import logging
 import numpy as np
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from PIL import Image
@@ -23,7 +24,11 @@ def retrack(images_dir: Path, skeletons_json: dict):
 
         if track_ids:=track_frame(tracker, frame_img, frame["skeletons"]):
             for i, _ in enumerate(frame["skeletons"]):
-                frame["skeletons"][i]["id_deepsort"] = track_ids[i]
+                try:
+                    frame["skeletons"][i]["id_deepsort"] = track_ids[i]
+                except IndexError as exc:
+                    logging.warning("Deepsort retracked less skeletons than the pose detection model...")
+                    raise IndexError from exc
 
     return skeletons_json
 
