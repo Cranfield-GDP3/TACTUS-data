@@ -241,14 +241,26 @@ def rotation_2d(input_folder_path: Path,
     return new_json_name
 
 
+def _skel_width_height(keypoints: list):
+
+    xmax = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
+    xmin = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
+    ymax = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
+    ymin = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
+
+    xscale = (int(xmax) - int(xmin)) / 100
+    yscale = (int(ymax) - int(ymin)) / 100
+    return xscale,yscale
+
+
 def noise_2d(input_folder_path: Path,
              json_name: list[str],
              output_folder_path: Path,
              num_copy: int = 3,
              noise_magnitude: float = 4.0):
     """
-    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise to each keypoints
-    coordinates depending on noise_magnitude parameter
+    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise of 1% of
+    the skeleton maximum amplitude to each keypoints coordinates, this 1% max value is multiplied by noise_magnitude
 
     Parameters
     ----------
@@ -261,7 +273,7 @@ def noise_2d(input_folder_path: Path,
     num_copy : int,
                number of copy to make with slight rotation until it reaches max_angle
     noise_magnitude : float,
-                      coefficient the random noise between 0 and 1 is multiplied by
+                      coefficient the random noise of maximum 1% of total skeleton amplitude is multiplied by
     """
     augment_ok = True
     new_json_name = []
@@ -275,16 +287,16 @@ def noise_2d(input_folder_path: Path,
             noisy_data = data
             for frame in range(0, num_frame):
                 for skeleton in range(len(noisy_data['frames'][frame]['skeletons'])):
-                    noise_for_face = noise_magnitude * random.random() * random.choice([-1, 1])
-                    for point in range(5):  # uniform noise for the face
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
-                                noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] +
-                                noise_for_face)
-                    for point in range(5, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'])):
+                    xscale, yscale = _skel_width_height(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"])
+                    noise_for_facex = noise_magnitude * random.random() * xscale * random.choice([-1, 1])
+                    noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
+                    for point in range(0,5*3,3):  # uniform noise for the face
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facey
+                    for point in range(5*3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
-                                noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] +
-                                noise_magnitude * random.random() * random.choice([-1, 1]))
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_magnitude * random.random() * xscale * random.choice([-1, 1])
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_magnitude * random.random() * yscale * random.choice([-1, 1])
                     if not _check_on_frame(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                            resolution):
                         augment_ok = False
