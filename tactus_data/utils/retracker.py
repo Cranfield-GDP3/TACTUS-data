@@ -6,21 +6,31 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 from PIL import Image
 
 
-def retrack(images_dir: Path, skeleton_file: Path):
-    with skeleton_file.open(encoding="utf-8", mode="r") as json_file_stream:
-        pose_estimation_json = json.load(json_file_stream)
+def retrack(images_dir: Path, skeletons_file: Path):
+    """
+    retrack an extracted video with deepsort algorithm.
+
+    Parameters
+    ----------
+    images_dir : Path
+        The path to the folder containing all the extracted images
+    skeletons_file : Path
+        The path to the json file outputed by alphapose
+    """
+    with skeletons_file.open(encoding="utf-8", mode="r") as json_file_stream:
+        skeletons_json = json.load(json_file_stream)
 
     tracker = DeepSort(max_age=5)
 
-    for frame in pose_estimation_json["frames"]:
+    for frame in skeletons_json["frames"]:
         frame_img = load_image(images_dir / frame["frame_id"])
 
         if track_ids:=track_frame(tracker, frame_img, frame["skeletons"]):
             for i, _ in enumerate(frame["skeletons"]):
                 frame["skeletons"][i]["id_deepsort"] = track_ids[i]
 
-    with skeleton_file.with_stem("alphapose_2d_tracked").open(encoding="utf-8", mode="w") as fp:
-        json.dump(pose_estimation_json, fp)
+    with skeletons_file.with_stem("alphapose_2d tracked").open(encoding="utf-8", mode="w") as fp:
+        json.dump(skeletons_json, fp)
 
 
 def track_frame(
