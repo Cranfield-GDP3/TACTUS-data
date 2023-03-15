@@ -2,6 +2,7 @@ from pathlib import Path
 from enum import Enum
 import json
 import logging
+from tqdm import tqdm
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.alphapose import alphapose_skeletonisation
@@ -74,7 +75,11 @@ def extract_skeletons(
     input_dir = input_dir / dataset.name
     fps_folder_name = _fps_folder_name(fps)
 
-    for extracted_frames_dir in input_dir.glob(f"*/{fps_folder_name}"):
+    nbr_of_videos = 0
+    for _ in input_dir.glob(f"*/{fps_folder_name}"):
+        nbr_of_videos += 1
+
+    for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
         skeletons_output_dir = (output_dir
                                 / dataset.name
