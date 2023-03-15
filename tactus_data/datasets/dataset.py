@@ -92,8 +92,10 @@ def extract_skeletons(
 
         try:
             tracked_json = retrack(extracted_frames_dir, formatted_json)
+            filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
+
             with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
-                json.dump(tracked_json, fp)
+                json.dump(filtered_json, fp)
         except IndexError:
             logging.warning("... discarding %s from %s", video_name, dataset.name)
 
@@ -101,3 +103,13 @@ def extract_skeletons(
 def _fps_folder_name(fps: int):
     """return the name of the fps folder for a given fps value"""
     return f"{fps}fps"
+
+
+def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: list[str]):
+    """remove every keys specified from the skeleton dictionnary"""
+    for frame in formatted_json["frames"]:
+        for skeleton in frame["skeletons"]:
+            for key in keys_to_remove:
+                del skeleton[key]
+
+    return formatted_json
