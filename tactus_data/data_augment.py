@@ -53,6 +53,7 @@ def _check_on_frame(keypoints: list,
 
 def plot_skeleton_2d(path_json: Path,
                      path_frame: Path,
+                     frame_number: int = 0,
                      show_frame: bool = True):
     """
     Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different augment
@@ -69,7 +70,11 @@ def plot_skeleton_2d(path_json: Path,
     with open(path_json) as file:
         data = json.load(file)
     fig, ax = plt.subplots()
-    for skeletons in data['frames'][20]['skeletons']:
+    max_frame = len(data['frames'])-1
+
+    if frame_number > max_frame:
+        frame_number = max_frame
+    for skeletons in data['frames'][frame_number]['skeletons']:
         keypoints = skeletons["keypoints"]
         keypoints_x = []
         keypoints_y = []
