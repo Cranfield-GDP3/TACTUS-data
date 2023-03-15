@@ -15,7 +15,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Literal, Tuple
-from subprocess import Popen
+from subprocess import Popen, DEVNULL
 from contextlib import contextmanager
 from PIL import Image
 
@@ -93,7 +93,7 @@ def alphapose_skeletonisation(
                  "--outdir", quote(output_filepath.absolute().with_suffix(''))]
 
     with change_working_dir(alphapose_path):
-        Popen(f"{sys.executable} {' '.join(arguments)}").wait()
+        Popen(f"{sys.executable} {' '.join(arguments)}", stdout=DEVNULL, stderr=DEVNULL).wait()
 
     result_file = output_filepath.with_suffix('') / "alphapose-results.json"
     alphapose_json = json.load(result_file.open())
