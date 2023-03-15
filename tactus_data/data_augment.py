@@ -200,7 +200,7 @@ def rotation_2d(input_folder_path: Path,
             resolution = data["resolution"]
             num_frame = len(data['frames'])
         new_json_name.append(file_name)
-        for angl in range(1,len(list_angle)):  # start 1 to not take the original
+        for angl in range(1, len(list_angle)):  # start 1 to not take the original
             rotated_data = data
             for frame in range(0, num_frame):
                 for skeleton in range(len(rotated_data['frames'][frame]['skeletons'])):
@@ -217,6 +217,7 @@ def rotation_2d(input_folder_path: Path,
                     json.dump(rotated_data, outfile)
             else:
                 print(new_json_name[len(new_json_name)-1] + " is out of frame")
+                new_json_name = json_name
     return new_json_name
 
 
@@ -274,6 +275,7 @@ def noise_2d(input_folder_path: Path,
                     json.dump(noisy_data, outfile)
             else:
                 print(new_json_name[len(new_json_name)-1] + " is out of frame")
+                new_json_name = json_name
     return new_json_name
 
 
@@ -371,6 +373,7 @@ def camera_distance_2d(input_folder_path: Path,
                 json.dump(scaled_data, outfile)
         else:
             print(str(file_name).strip(".json") + "_scale" + str(distance) + " is out of frame")
+            new_json_name = json_name
     return new_json_name
 
 
@@ -397,20 +400,18 @@ def skeletons_scale():
     """
 
 
-def grid_augment(path_file: Path,
-                 grid: list,
-                 num_fps: int,
-                 num_copy: int = -1,
-                 random_seed: int = 30000):
+def grid_augment(path_json: Path,
+                 grid: list[list],
+                 max_copy: int = -1):
     """
     Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
     with different factors the goal is to create interaction with different size individual
 
     Parameters
     ----------
-    path_file : Path,
-                path where the original json files are located
-    grid : list,
+    path_json : Path,
+                path where the original json file is located
+    grid : list[list],
            the grid of value that will be use for the grid search the gris is a list of list, each element
            of the list a list of all the argument of each augment can take without including the path,
            in the form of another list :
@@ -423,50 +424,58 @@ def grid_augment(path_file: Path,
            If you don't want an augment to be used just put an empty list
            list_camera_distance_2d :
             distance = [-5,-2, 2, 5, 10, 15] / focal_length = [2.8, 3.6, 4.0, 6.0]
-
-
-    num_fps : int,
-              Number of fps of the json file that needs to be augmented
-    num_copy : int,
+    max_copy : int,
                Number of copy of the original file are going to be generated
-    random_seed : int,
-                  value of the seed for random augments
     """
-    # grid = [[True, False],
-    #       [[-5, -2, 0, 5, 10, 15], [2.8, 3.6, 6.0]],
-    #        [[-10,0,10],[3],[(BK.LAnkle, BK.RAnkle),(BK.LShoulder,BK.RShoulder)]],
-    #        [[1], [0, 2, 4]]]
-
+    parent_folder = path_json.parent
     list_flip_h = grid[0]
     list_camera_distance_2d = grid[1]
     list_rotation_2d = grid[2]
     list_noise_2d = grid[3]
-
     choice_flip = list(product(list_flip_h))
-    choice_rot = list(product(list_rotation_2d[0],list_rotation_2d[1],list_rotation_2d[2]))
-    choice_cam = list(product(list_camera_distance_2d[0],list_camera_distance_2d[1]))
-    choice_noise = list(product(list_noise_2d[0],list_noise_2d[1]))
-    generator = (product(choice_flip,choice_cam,choice_rot,choice_noise))
-
+    choice_rot = list(product(list_rotation_2d[0], list_rotation_2d[1], list_rotation_2d[2]))
+    choice_cam = list(product(list_camera_distance_2d[0], list_camera_distance_2d[1]))
+    choice_noise = list(product(list_noise_2d[0], list_noise_2d[1]))
+    generator = (product(choice_flip, choice_cam, choice_rot, choice_noise))
     generated_pic = 0
-    i =0
+    counter = 1
+    if max_copy == -1:
+        flag_limit = False
+    else:
+        flag_limit = True
+    with open(path_json) as file:
+        original_data = json.load(file)
     for indices in generator:
-        # print(indices)
-        i += 1
-        generated_pic += indices[2][1] + indices[3][0]
+        if flag_limit and generated_pic >= max_copy:
+            break
+        else:
+            # create copy json with final name
+            new_name = path_json.stem + "_augment_" + str(counter) + ".json"
+            with open(str(parent_folder) + "\\" + str(new_name),
+                      'w') as outfile:
+                json.dump(original_data, outfile)
+            # No parameter on flip so True / false
+            if indices[0] == [True]:
+                result_flip = flip_h_2d(path_json, [new_name], path_json)
+            else:
+                result_flip = [new_name]
+            result_cam = camera_distance_2d(parent_folder, result_flip, parent_folder, indices[1][0], indices[1][1])
+            result_rota = rotation_2d(parent_folder, result_cam, parent_folder, indices[2][0],
+                                      indices[2][1], indices[2][2])
+            result_noise = noise_2d(parent_folder, result_rota, parent_folder, indices[3][0], indices[3][1])
+            generated_pic += len(result_noise)
+            counter += 1
+    if max_copy == -1:
+        print("Generated :", generated_pic, " augmented copy of ", path_json.name)
+    else :
+        print("Generation Maxed out ! Only generated ",generated_pic," augmented copy of ",path_json.name)
 
-        # create empty json with final name
-        new_name = path_file.stem + "_augment_" + str(i) + ".json"
-        # list_flip_h
 
-        # list_camera_distance_2d
-
-        # list_rotation_2d
-
-        # list_noise_2d
-
-    print(generated_pic)
-
+def augment_all_vid(path_file: Path,
+                    fps: int,
+                    max_copy: int = -1,
+                    random_seed: int = 30000):
+    i = 3
 
 
 
