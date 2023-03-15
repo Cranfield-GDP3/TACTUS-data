@@ -8,7 +8,7 @@ from PIL import Image
 import numpy as np
 
 
-class BodyKeypoints(Enum):
+class BK(Enum):
     Nose = 0
     LEye = 1
     REye = 2
@@ -120,7 +120,7 @@ def _rotate_center(keypoints: list,
                 all the 17 keypoints coordinates x,y,confidence (total of 51 values)
     angle : float,
             value of the rotation angle in radian
-    center_of_rotation : tuple, allow to compute the center or rotation for the skeleton, use BodyKeypoints
+    center_of_rotation : tuple, allow to compute the center or rotation for the skeleton, use BK
     class as reference, will do the center value among all the keypoint coordinates in the tuple
     """
 
@@ -159,7 +159,7 @@ def rotation_2d(path_file: Path,
                 path_output: Path,
                 max_angle: float = 10.0,
                 num_copy: int = 3,
-                rotate_center: tuple = (BodyKeypoints.LAnkle, BodyKeypoints.RAnkle)):
+                rotate_center: tuple = (BK.LAnkle, BK.RAnkle)):
     """
     Generate 1 json per number of copy asked + the original one. Each copy is rotated more and more until it reaches the
     max_angle. You can pick where you want the center of rotation of the skeleton to be
@@ -175,7 +175,7 @@ def rotation_2d(path_file: Path,
     num_copy : int,
                number of copy to make with slight rotation until it reaches max_angle
     rotate_center : tuple,
-                    allow to compute the center or rotation for the skeleton, use BodyKeypoints class as reference,
+                    allow to compute the center or rotation for the skeleton, use BK class as reference,
                     will do the center value among all the keypoint coordinates in the tuple
     """
 
@@ -255,12 +255,12 @@ def _center_after_scaling(keypoints: list,
                           resolution: list,
                           factor: float):
     res_center = [x / 2 for x in resolution]
-    d_center = [keypoints[BodyKeypoints["Nose"].value] - res_center[0],
-            keypoints[BodyKeypoints["Nose"].value + 1] - res_center[1]]
+    d_center = [keypoints[BK["Nose"].value] - res_center[0],
+            keypoints[BK["Nose"].value + 1] - res_center[1]]
     new_d_center = [x * factor for x in d_center]
     desired = [res_center[0]+new_d_center[0],res_center[1]+new_d_center[1]]
-    diff = [scale_keypoints[BodyKeypoints["Nose"].value] -desired[0],
-            scale_keypoints[BodyKeypoints["Nose"].value + 1] - desired[1]]
+    diff = [scale_keypoints[BK["Nose"].value] -desired[0],
+            scale_keypoints[BK["Nose"].value + 1] - desired[1]]
     for i in range(0, len(keypoints) - 1, 3):
         scale_keypoints[i] = scale_keypoints[i] - diff[0]
         scale_keypoints[i + 1] = scale_keypoints[i + 1] - diff[1]
@@ -363,3 +363,52 @@ def skeletons_scale():
     max_diff_factor : float,
                       Maximum difference between the factor of all skeletons
     """
+
+def grid_augment(path_file: Path,
+                 grid: list,
+                 num_fps: int,
+                 num_copy: int,
+                 random_seed: int = 30000):
+    """
+    Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
+    with different factors the goal is to create interaction with different size individual
+
+    Parameters
+    ----------
+    path_file : Path,
+                path where the original json files are located
+    grid : list,
+           the grid of value that will be use for the grid search the gris is a list of list, each element
+           of the list a list of all the argument of each augment can take without including the path, in the form of another list :
+           [list_flip_h,list_rotation_2d,list_camera_distance_2d,list_noise_2d]
+           Ex:
+           list_flip_h = [1]
+           list_rotation_2d = [max_angle,num_copy,rotate_center]
+           list_camera_distance_2d =[distance,focal_length]
+           list_noise_2d = [num_copy, noise_magnitude]
+           If you don't want an augment to be used just put an empty list
+           list_camera_distance_2d :
+            distance = [-5,-2, 2, 5, 10, 15] / focal_length = [2.8, 3.6, 4.0, 6.0]
+
+
+    num_fps : int,
+              Number of fps of the json file that needs to be augmented
+    num_copy : int,
+               Number of copy of the original file are going to be generated
+    random_seed : int,
+                  value of the seed for random augments
+    """
+    grid = [[[1],[]],
+            [[-10,0,10],[3],[(BK.LAnkle, BK.RAnkle),(BK.LShoulder,BK.RShoulder)]],
+            [[-5, -2, 5, 10, 15], [2.8, 3.6, 6.0]],
+            [[2], [2, 4]]]
+    list_flip_h = grid[0]
+    list_rotation_2d = grid[1]
+    list_camera_distance_2d = grid[2]
+    list_noise_2d = grid[3]
+
+
+
+
+
+
