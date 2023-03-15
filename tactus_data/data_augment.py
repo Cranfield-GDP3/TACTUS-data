@@ -1,5 +1,6 @@
 import json
 import random
+from itertools import product
 from enum import Enum
 from pathlib import Path
 
@@ -75,35 +76,43 @@ def plot_skeleton_2d(path_json: Path,
     plt.show()
 
 
-def flip_h_2d(path_file: Path,
-              path_output: Path):
+def flip_h_2d(input_folder_path: Path,
+              json_name: list[str],
+              output_folder_path: Path):
     """
     Duplicate skeleton json data and flip horizontally one of the file.
 
     Parameters
     ----------
-    path_file : Path,
-                path where the original json files are located
-    path_output : Path,
-                  path where the new generated data are saved
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    json_name : list[str],
+                a list of json files names that are going to be updated Ex: ["file.json"]
+    output_folder_path : Path,
+                  path of the folder where the new generated json are saved
     """
-    list_files = Path.iterdir(path_file)
+
     augment_ok = True
-    for file_path in list_files:
-        file_name = file_path.name
-        with open(file_path) as file:
+    for file_name in json_name:
+        with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
-        shape = data['resolution']
-        num_frame = len(data['frames'])
+            resolution = data['resolution']
+            num_frame = len(data['frames'])
         flip_data = data
         for frame in range(0, num_frame):
             for skeleton in range(len(flip_data['frames'][frame]['skeletons'])):
                 for point in range(0, len(flip_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
-                        shape[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
+                        resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
+                if not _check_on_frame(flip_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
+                                       resolution):
+                    augment_ok = False
         if augment_ok:
-            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_H_flip.json", 'w') as outfile:
+            with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
                 json.dump(flip_data, outfile)
+        else:
+            print(str(file_name) + " is out of frame")
+    return json_name
 
 
 def _rotate_center(keypoints: list,
@@ -155,8 +164,9 @@ def _rotate_center(keypoints: list,
     return decenter_keypoints
 
 
-def rotation_2d(path_file: Path,
-                path_output: Path,
+def rotation_2d(input_folder_path: Path,
+                json_name: list[str],
+                output_folder_path: Path,
                 max_angle: float = 10.0,
                 num_copy: int = 3,
                 rotate_center: tuple = (BK.LAnkle, BK.RAnkle)):
@@ -166,10 +176,12 @@ def rotation_2d(path_file: Path,
 
     Parameters
     ----------
-    path_file : Path,
-                path where the original json files are located
-    path_output : Path,
-                  path where the new generated data are saved
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    json_name : list[str],
+                a list of json files names that are going to be updated Ex: ["file.json"]
+    output_folder_path : Path,
+                  path of the folder where the new generated json are saved
     max_angle : float,
                 value of the max rotation angle in degree
     num_copy : int,
@@ -178,18 +190,17 @@ def rotation_2d(path_file: Path,
                     allow to compute the center or rotation for the skeleton, use BK class as reference,
                     will do the center value among all the keypoint coordinates in the tuple
     """
-
-    list_files = Path.iterdir(path_file)
     augment_ok = True
     rad_angle = np.radians(max_angle)
-    list_angle = np.linspace(0, rad_angle, num_copy + 1)  # start 0 to keep original
-    for file_path in list_files:
-        file_name = file_path.name
-        with open(file_path) as file:
+    list_angle = np.linspace(0, rad_angle, num_copy + 1)
+    new_json_name = []
+    for file_name in json_name:
+        with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
             resolution = data["resolution"]
-        num_frame = len(data['frames'])
-        for angl in range(1,len(list_angle)):
+            num_frame = len(data['frames'])
+        new_json_name.append(file_name)
+        for angl in range(1,len(list_angle)):  # start 1 to not take the original
             rotated_data = data
             for frame in range(0, num_frame):
                 for skeleton in range(len(rotated_data['frames'][frame]['skeletons'])):
@@ -200,13 +211,18 @@ def rotation_2d(path_file: Path,
                                            resolution):
                         augment_ok = False
             if augment_ok:
-                with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_Rotated" + str(angl) + ".json",
+                new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
+                with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
                           'w') as outfile:
                     json.dump(rotated_data, outfile)
+            else:
+                print(new_json_name[len(new_json_name)-1] + " is out of frame")
+    return new_json_name
 
 
-def noise_2d(path_file: Path,
-             path_output: Path,
+def noise_2d(input_folder_path: Path,
+             json_name: list[str],
+             output_folder_path: Path,
              num_copy: int = 3,
              noise_magnitude: float = 4.0):
     """
@@ -215,27 +231,34 @@ def noise_2d(path_file: Path,
 
     Parameters
     ----------
-    path_file : Path,
-                path where the original json files are located
-    path_output : Path,
-                  path where the new generated data are saved
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    json_name : list[str],
+                a list of json files names that are going to be updated Ex: ["file.json"]
+    output_folder_path : Path,
+                  path of the folder where the new generated json are saved
     num_copy : int,
                number of copy to make with slight rotation until it reaches max_angle
     noise_magnitude : float,
                       coefficient the random noise between 0 and 1 is multiplied by
     """
-    list_files = Path.iterdir(path_file)
     augment_ok = True
-    for file_path in list_files:
-        file_name = file_path.name
-        with open(file_path) as file:
+    new_json_name = []
+    for file_name in json_name:
+        with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
             resolution = data["resolution"]
-        num_frame = len(data['frames'])
+            num_frame = len(data['frames'])
+        new_json_name.append(file_name)
         for copy in range(num_copy):
             noisy_data = data
             for frame in range(0, num_frame):
                 for skeleton in range(len(noisy_data['frames'][frame]['skeletons'])):
+                    noise_for_face = noise_magnitude * random.random() * random.choice([-1, 1])
+                    for point in range(5):  # uniform noise for the face
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
+                                noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] +
+                                noise_for_face)
                     for point in range(5, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'])):
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
@@ -245,9 +268,13 @@ def noise_2d(path_file: Path,
                                            resolution):
                         augment_ok = False
             if augment_ok:
-                with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_noise" + str(copy) + ".json",
+                new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
+                with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
                           'w') as outfile:
                     json.dump(noisy_data, outfile)
+            else:
+                print(new_json_name[len(new_json_name)-1] + " is out of frame")
+    return new_json_name
 
 
 def _center_after_scaling(keypoints: list,
@@ -256,15 +283,16 @@ def _center_after_scaling(keypoints: list,
                           factor: float):
     res_center = [x / 2 for x in resolution]
     d_center = [keypoints[BK["Nose"].value] - res_center[0],
-            keypoints[BK["Nose"].value + 1] - res_center[1]]
+                keypoints[BK["Nose"].value + 1] - res_center[1]]
     new_d_center = [x * factor for x in d_center]
-    desired = [res_center[0]+new_d_center[0],res_center[1]+new_d_center[1]]
-    diff = [scale_keypoints[BK["Nose"].value] -desired[0],
+    desired = [res_center[0]+new_d_center[0], res_center[1]+new_d_center[1]]
+    diff = [scale_keypoints[BK["Nose"].value] - desired[0],
             scale_keypoints[BK["Nose"].value + 1] - desired[1]]
     for i in range(0, len(keypoints) - 1, 3):
         scale_keypoints[i] = scale_keypoints[i] - diff[0]
         scale_keypoints[i + 1] = scale_keypoints[i + 1] - diff[1]
     return scale_keypoints
+
 
 def _uniform_scale(keypoints: list,
                    distance_change: float,
@@ -289,8 +317,9 @@ def _uniform_scale(keypoints: list,
     return scale_keypoints
 
 
-def camera_distance_2d(path_file: Path,
-                       path_output: Path,
+def camera_distance_2d(input_folder_path: Path,
+                       json_name: list[str],
+                       output_folder_path: Path,
                        distance: float,
                        focal_length: float = 3.6):
     """
@@ -300,10 +329,12 @@ def camera_distance_2d(path_file: Path,
 
     Parameters
     ----------
-    path_file : Path,
-                path where the original json files are located
-    path_output : Path,
-                    path where the new generated data are saved
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    json_name : list[str],
+                a list of json files names that are going to be updated Ex: ["file.json"]
+    output_folder_path : Path,
+                  path of the folder where the new generated json are saved
     distance : float,
                change the camera distance by a positive or negative number of meter to the scene
                negative means closer positive means further. Don't put -10 as value since it will mean the camera is
@@ -318,14 +349,13 @@ def camera_distance_2d(path_file: Path,
                     -   4.0 mm   /      38°      /   12 m
                     -   6.0 mm   /      54°      /   18 m
         """
-    list_files = Path.iterdir(path_file)
     augment_ok = True
-    for file_path in list_files:
-        file_name = file_path.name
-        with open(file_path) as file:
+    new_json_name = []
+    for file_name in json_name:
+        with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
             resolution = data["resolution"]
-        num_frame = len(data['frames'])
+            num_frame = len(data['frames'])
         scaled_data = data
         for frame in range(0, num_frame):
             for skeleton in range(len(scaled_data['frames'][frame]['skeletons'])):
@@ -335,11 +365,13 @@ def camera_distance_2d(path_file: Path,
                 if not _check_on_frame(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"], resolution):
                     augment_ok = False
         if augment_ok:
-            with open(str(path_output) + "\\" + str(file_name).strip(".json") + "_scale" + str(distance) + ".json",
+            new_json_name.append(file_name)
+            with open(str(output_folder_path) + "\\" + str(file_name),
                       'w') as outfile:
                 json.dump(scaled_data, outfile)
         else:
             print(str(file_name).strip(".json") + "_scale" + str(distance) + " is out of frame")
+    return new_json_name
 
 
 def anthropomorphic_scale(factor: float,
@@ -364,10 +396,11 @@ def skeletons_scale():
                       Maximum difference between the factor of all skeletons
     """
 
+
 def grid_augment(path_file: Path,
                  grid: list,
                  num_fps: int,
-                 num_copy: int,
+                 num_copy: int = -1,
                  random_seed: int = 30000):
     """
     Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
@@ -379,12 +412,13 @@ def grid_augment(path_file: Path,
                 path where the original json files are located
     grid : list,
            the grid of value that will be use for the grid search the gris is a list of list, each element
-           of the list a list of all the argument of each augment can take without including the path, in the form of another list :
-           [list_flip_h,list_rotation_2d,list_camera_distance_2d,list_noise_2d]
+           of the list a list of all the argument of each augment can take without including the path,
+           in the form of another list :
+           [list_flip_h, list_camera_distance_2d,list_rotation_2d,list_noise_2d]
            Ex:
-           list_flip_h = [1]
-           list_rotation_2d = [max_angle,num_copy,rotate_center]
+           list_flip_h = [True, False]
            list_camera_distance_2d =[distance,focal_length]
+           list_rotation_2d = [max_angle,num_copy,rotate_center]
            list_noise_2d = [num_copy, noise_magnitude]
            If you don't want an augment to be used just put an empty list
            list_camera_distance_2d :
@@ -398,15 +432,40 @@ def grid_augment(path_file: Path,
     random_seed : int,
                   value of the seed for random augments
     """
-    grid = [[[1],[]],
-            [[-10,0,10],[3],[(BK.LAnkle, BK.RAnkle),(BK.LShoulder,BK.RShoulder)]],
-            [[-5, -2, 5, 10, 15], [2.8, 3.6, 6.0]],
-            [[2], [2, 4]]]
+    # grid = [[True, False],
+    #       [[-5, -2, 0, 5, 10, 15], [2.8, 3.6, 6.0]],
+    #        [[-10,0,10],[3],[(BK.LAnkle, BK.RAnkle),(BK.LShoulder,BK.RShoulder)]],
+    #        [[1], [0, 2, 4]]]
+
     list_flip_h = grid[0]
-    list_rotation_2d = grid[1]
-    list_camera_distance_2d = grid[2]
+    list_camera_distance_2d = grid[1]
+    list_rotation_2d = grid[2]
     list_noise_2d = grid[3]
 
+    choice_flip = list(product(list_flip_h))
+    choice_rot = list(product(list_rotation_2d[0],list_rotation_2d[1],list_rotation_2d[2]))
+    choice_cam = list(product(list_camera_distance_2d[0],list_camera_distance_2d[1]))
+    choice_noise = list(product(list_noise_2d[0],list_noise_2d[1]))
+    generator = (product(choice_flip,choice_cam,choice_rot,choice_noise))
+
+    generated_pic = 0
+    i =0
+    for indices in generator:
+        # print(indices)
+        i += 1
+        generated_pic += indices[2][1] + indices[3][0]
+
+        # create empty json with final name
+        new_name = path_file.stem + "_augment_" + str(i) + ".json"
+        # list_flip_h
+
+        # list_camera_distance_2d
+
+        # list_rotation_2d
+
+        # list_noise_2d
+
+    print(generated_pic)
 
 
 
