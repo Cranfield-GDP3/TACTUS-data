@@ -23,22 +23,20 @@ def extract_frames(
 
     cap = cv2.VideoCapture(str(video_path))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    extract_frequency = int(fps / desired_fps)
+    if desired_fps is None:
+        extract_frequency = 1
+    else:
+        extract_frequency = int(fps / desired_fps)
 
     n_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     n_frame_len = len(str(n_frame))
-
 
     count = 0
     while True:
         _, frame = cap.read()
         if frame is None:
             break
-        if desired_fps == -1:
-            save_path = str(result_path / f"{str(count).zfill(n_frame_len)}.jpg")
-            cv2.imwrite(save_path, frame)
-        else:
-            if count % extract_frequency == 0:
+        if count % extract_frequency == 0:
                 frame_name = str(count).zfill(n_frame_len)
                 save_path = output_dir.absolute() / f"{frame_name}.jpg"
                 cv2.imwrite(str(save_path), frame)
