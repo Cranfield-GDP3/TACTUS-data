@@ -135,7 +135,7 @@ def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, i
         new_skeleton = {"keypoints": skeleton["keypoints"],
                         "score": skeleton["score"],
                         "box": skeleton["box"],
-                        "id": skeleton["idx"],}
+                        "id_alphapose": skeleton["idx"],}
         standard_json["frames"][-1]["skeletons"].append(new_skeleton)
 
     json.dump(standard_json, output_json.open(mode='w'))
