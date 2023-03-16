@@ -88,8 +88,7 @@ def extract_skeletons(
                                 / fps_folder_name
                                 / "alphapose_2d.json")
 
-        formatted_json = alphapose_skeletonisation(extracted_frames_dir,
-                                                 skeletons_output_dir)
+        formatted_json = alphapose_skeletonisation(extracted_frames_dir)
 
         try:
             tracked_json = retrack(extracted_frames_dir, formatted_json)

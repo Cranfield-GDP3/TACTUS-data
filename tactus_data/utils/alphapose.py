@@ -13,6 +13,7 @@ import os
 import sys
 import json
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Literal, Tuple
 from subprocess import Popen, DEVNULL
@@ -60,7 +61,6 @@ def check_detector_weights_path(alphapose_path: Path,
 
 def alphapose_skeletonisation(
         input_dir: Path,
-        output_filepath: Path,
         detector: Literal["yolo", "yolox", "tracker"] = "yolo"
     ):
     """
@@ -72,8 +72,6 @@ def alphapose_skeletonisation(
     ----------
     input_dir : Path
         Input directory with all the images to extract skeletons from
-    output_filepath : Path
-        Path for the result JSON file
     detector : Literal["yolo", "yolox", "tracker"], optional
         alphapose detector to use, by default "yolo"
     """
@@ -83,21 +81,23 @@ def alphapose_skeletonisation(
                        "256x192_res50_lr1e-3_1x.yaml")
     checkpoint_path = model_weights_path(alphapose_path)
 
-    file_path = Path(alphapose_path, "scripts", "demo_inference.py")
+    script_path = Path(alphapose_path, "scripts", "demo_inference.py")
 
-    arguments = [quote(file_path),
+    output_dir = Path(tempfile.mkdtemp(prefix="alphapose_"))
+
+    arguments = [quote(script_path),
                  "--cfg", quote(config_path),
                  "--checkpoint", quote(checkpoint_path),
                  "--detector", detector,
                  "--indir", quote(input_dir.absolute()),
-                 "--outdir", quote(output_filepath.absolute().with_suffix(''))]
+                 "--outdir", quote(output_dir.absolute().with_suffix(''))]
 
     with change_working_dir(alphapose_path):
         Popen(f"{sys.executable} {' '.join(arguments)}", stdout=DEVNULL, stderr=DEVNULL).wait()
 
-    result_file = output_filepath.with_suffix('') / "alphapose-results.json"
+    result_file = output_dir.with_suffix('') / "alphapose-results.json"
     alphapose_json = json.load(result_file.open())
-    shutil.rmtree(output_filepath.with_suffix(''))
+    shutil.rmtree(output_dir.with_suffix(''))
 
     resolution = directory_resolution(input_dir)
 
