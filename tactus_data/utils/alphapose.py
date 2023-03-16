@@ -13,9 +13,10 @@ import os
 import sys
 import json
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Literal, Tuple
-from subprocess import Popen
+from subprocess import Popen, DEVNULL
 from contextlib import contextmanager
 from PIL import Image
 
@@ -60,7 +61,6 @@ def check_detector_weights_path(alphapose_path: Path,
 
 def alphapose_skeletonisation(
         input_dir: Path,
-        output_filepath: Path,
         detector: Literal["yolo", "yolox", "tracker"] = "yolo"
     ):
     """
@@ -72,8 +72,6 @@ def alphapose_skeletonisation(
     ----------
     input_dir : Path
         Input directory with all the images to extract skeletons from
-    output_filepath : Path
-        Path for the result JSON file outputed by alphapose
     detector : Literal["yolo", "yolox", "tracker"], optional
         alphapose detector to use, by default "yolo"
     """
@@ -83,42 +81,48 @@ def alphapose_skeletonisation(
                        "256x192_res50_lr1e-3_1x.yaml")
     checkpoint_path = model_weights_path(alphapose_path)
 
-    file_path = Path(alphapose_path, "scripts", "demo_inference.py")
+    script_path = Path(alphapose_path, "scripts", "demo_inference.py")
 
-    arguments = [quote(file_path),
+    output_dir = Path(tempfile.mkdtemp(prefix="alphapose_"))
+
+    arguments = [quote(script_path),
                  "--cfg", quote(config_path),
                  "--checkpoint", quote(checkpoint_path),
                  "--detector", detector,
-                 "--indir", quote(input_dir),
-                 "--outdir", quote(output_filepath.with_suffix('')),
-                 "--pose_track"]
+                 "--indir", quote(input_dir.absolute()),
+                 "--outdir", quote(output_dir.absolute().with_suffix(''))]
 
     with change_working_dir(alphapose_path):
-        Popen(f"{sys.executable} {' '.join(arguments)}").wait()
+        Popen(f"{sys.executable} {' '.join(arguments)}", stdout=DEVNULL, stderr=DEVNULL).wait()
 
-    result_file = output_filepath.with_suffix('') / "alphapose-results.json"
+    result_file = output_dir.with_suffix('') / "alphapose-results.json"
+    alphapose_json = json.load(result_file.open())
+    shutil.rmtree(output_dir.with_suffix(''))
+
     resolution = directory_resolution(input_dir)
-    json_formatter(result_file, output_filepath, resolution)
 
-    shutil.rmtree(output_filepath.with_suffix(''))
+    formatted_json = json_formatter(alphapose_json, resolution)
+
+    return formatted_json
 
 
-def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, int]):
+def json_formatter(alphapose_json: list, resolution: Tuple[int, int]) -> dict:
     """
     convert the json output of alphapose to a standard format for this project.
     The standard format follows the example in `data/processed/readme.md`.
 
     Parameters
     ----------
-    input_json : Path
-        the path to the output json of alphapose
-    output_json : Path
-        the path to where to save the new json
+    alphapose_json : list
+        alphapose result dictionnary
     resolution : List[int, int]
         the resolution of the video
-    """
-    alphapose_json = json.load(input_json.open())
 
+    Returns
+    -------
+    dict
+        the formatted dictionnary
+    """
     processed_frames = []
     standard_json = {"resolution": resolution,
                      "frames": [],}
@@ -134,11 +138,10 @@ def json_formatter(input_json: Path, output_json: Path, resolution: Tuple[int, i
 
         new_skeleton = {"keypoints": skeleton["keypoints"],
                         "score": skeleton["score"],
-                        "box": skeleton["box"],
-                        "id": skeleton["idx"],}
+                        "box": skeleton["box"],}
         standard_json["frames"][-1]["skeletons"].append(new_skeleton)
 
-    json.dump(standard_json, output_json.open(mode='w'))
+    return standard_json
 
 
 def directory_resolution(directory: Path):
@@ -156,7 +159,6 @@ def directory_resolution(directory: Path):
     Tuple[int, int]
         the resolution
     """
-    print(directory)
     for image_path in directory.glob("*.jpg"):
         img = Image.open(image_path)
         resolution = img.size

@@ -1,8 +1,12 @@
 from pathlib import Path
 from enum import Enum
+import json
+import logging
+from tqdm import tqdm
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.alphapose import alphapose_skeletonisation
+from tactus_data.utils.retracker import deepsort
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -71,7 +75,12 @@ def extract_skeletons(
     input_dir = input_dir / dataset.name
     fps_folder_name = _fps_folder_name(fps)
 
-    for extracted_frames_dir in input_dir.glob(f"*/{fps_folder_name}"):
+    nbr_of_videos = 0
+    for _ in input_dir.glob(f"*/{fps_folder_name}"):
+        nbr_of_videos += 1
+
+    discarded_videos = []
+    for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
         skeletons_output_dir = (output_dir
                                 / dataset.name
@@ -79,9 +88,33 @@ def extract_skeletons(
                                 / fps_folder_name
                                 / "alphapose_2d.json")
 
-        alphapose_skeletonisation(extracted_frames_dir.absolute(),
-                                  skeletons_output_dir)
+        formatted_json = alphapose_skeletonisation(extracted_frames_dir)
+
+        try:
+            tracked_json = deepsort(extracted_frames_dir, formatted_json)
+        except IndexError:
+            discarded_videos.append(video_name)
+        else:
+            filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
+
+            with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
+                json.dump(filtered_json, fp)
+
+    if len(discarded_videos) > 0:
+        logging.warning("Discarding %s videos from %s:", len(discarded_videos), dataset.name)
+        logging.warning("\t %s", "\t".join(discarded_videos))
+
 
 def _fps_folder_name(fps: int):
     """return the name of the fps folder for a given fps value"""
     return f"{fps}fps"
+
+
+def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: list[str]):
+    """remove every keys specified from the skeleton dictionnary"""
+    for frame in formatted_json["frames"]:
+        for skeleton in frame["skeletons"]:
+            for key in keys_to_remove:
+                del skeleton[key]
+
+    return formatted_json
