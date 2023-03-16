@@ -103,13 +103,15 @@ def label_video_frame(path_file: Path,
         offender = -1
         while action_left == 1:
             while offender == -1:
-                print("Action number",action_number, "\nWho is doing the action ?\nIf left person press 1 if right person press 2")
+                print("Action number",action_number, "\nWho is doing the action ?\nIf left person press 1 if right person press 2 and 0 if neutral action")
                 key = keyboard.read_key()
                 time.sleep(0.3)
                 if key == "1":
                     offender = 1
                 elif key == "2":
                     offender = 2
+                elif key == "0":
+                    offender = 0
                 else:
                     print("\nBad input retry\n")
             data_dic["offender"].append(offender)
@@ -147,6 +149,3 @@ def mkdir(raw_dir: Path,
         dirName = target_dir + '/' + dirName
         if not os.path.exists(dirName):
             os.mkdir(dirName)
-
-
-label_video_frame(Path("C:\\Users\\paulb\\Downloads\\ut-interaction_segmented_set1\\"),Path("C:\\Users\\paulb\\Downloads\\ut-interaction_segmented_set1"))
