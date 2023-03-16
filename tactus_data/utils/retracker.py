@@ -5,7 +5,7 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 from PIL import Image
 
 
-def retrack(images_dir: Path, skeletons_json: dict):
+def deepsort(images_dir: Path, skeletons_json: dict):
     """
     retrack an extracted video with deepsort algorithm.
 
@@ -22,7 +22,8 @@ def retrack(images_dir: Path, skeletons_json: dict):
     for i_frame, frame in enumerate(skeletons_json["frames"]):
         frame_img = load_image(images_dir / frame["frame_id"])
 
-        if track_ids:=track_frame(tracker, frame_img, frame["skeletons"]):
+        track_ids = deepsort_track_frame(tracker, frame_img, frame["skeletons"])
+        if track_ids:
             for i_skeleton, skeleton in enumerate(frame["skeletons"]):
                 skeleton["id_deepsort"] = track_ids[i_skeleton]
         else:
@@ -34,7 +35,7 @@ def retrack(images_dir: Path, skeletons_json: dict):
     return skeletons_json
 
 
-def track_frame(
+def deepsort_track_frame(
         tracker: DeepSort,
         frame: np.ndarray,
         skeletons: list[dict]

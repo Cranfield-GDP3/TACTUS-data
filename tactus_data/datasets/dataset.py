@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.alphapose import alphapose_skeletonisation
-from tactus_data.utils.retracker import retrack
+from tactus_data.utils.retracker import deepsort
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -91,7 +91,7 @@ def extract_skeletons(
         formatted_json = alphapose_skeletonisation(extracted_frames_dir)
 
         try:
-            tracked_json = retrack(extracted_frames_dir, formatted_json)
+            tracked_json = deepsort(extracted_frames_dir, formatted_json)
         except IndexError:
             discarded_videos.append(video_name)
         else:
