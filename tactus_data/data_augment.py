@@ -45,7 +45,7 @@ def _check_on_frame(keypoints: list,
     flag_ok = True
     for i in range(0, len(keypoints), 3):
         if keypoints[i] > resolution[0] or keypoints[i] < 0 or keypoints[i+1] > resolution[1] or keypoints[i+1] < 0:
-            print("Value ",keypoints[i],"    Resolution :",resolution)
+            # print("Value ",keypoints[i],"    Resolution :",resolution)
             flag_ok = False
             return flag_ok
     return flag_ok
@@ -65,9 +65,11 @@ def plot_skeleton_2d(path_json: Path,
     """
     with open(path_json) as file:
         data = json.load(file)
+    fig, ax = plt.subplots()
     img = np.asarray(Image.open(path_frame))
+
     plt.imshow(img)
-    for skeletons in data['frames'][23]['skeletons']:
+    for skeletons in data['frames'][20]['skeletons']:
         keypoints = skeletons["keypoints"]
         keypoints_x = []
         keypoints_y = []
@@ -93,9 +95,10 @@ def plot_skeleton_2d(path_json: Path,
                     (BK.Nose,BK.REye),
                     (BK.LEye,BK.LEar),
                     (BK.REye,BK.REar)]
-        plt.scatter(keypoints_x, keypoints_y)
+        ax.scatter(keypoints_x, keypoints_y)
         for i in list_link:
-            plt.plot([keypoints_x[i[0].value],keypoints_x[i[1].value]],[keypoints_y[i[0].value],keypoints_y[i[1].value]])
+            ax.plot([keypoints_x[i[0].value],keypoints_x[i[1].value]],[keypoints_y[i[0].value],keypoints_y[i[1].value]])
+    #ax.set_ylim(ax.get_ylim()[::-1])  # (0,0) in top left hand corner
     plt.show()
 
 
@@ -467,7 +470,7 @@ def grid_augment(path_json: Path,
                 json.dump(original_data, outfile)
             # No parameter on flip so True / false
             if indices[0] == (True,):
-                result_flip = flip_h_2d(parent_folder, [new_name], path_json)
+                result_flip = flip_h_2d(parent_folder, [new_name], parent_folder)
             else:
                 result_flip = [new_name]
             result_cam = camera_distance_2d(parent_folder, result_flip, parent_folder, indices[1][0], indices[1][1])
@@ -477,10 +480,11 @@ def grid_augment(path_json: Path,
             generated_pic += len(result_noise)
             counter += 1
     if max_copy == -1:
-        print("Generated :", generated_pic, " augmented copy of ", path_json.name)
+        print("Generated :", generated_pic, " augmented copy of ", parent_folder.parts[len(parent_folder.parts)-2])
     else :
-        print("Generation Maxed out ! Only generated ",generated_pic," augmented copy of ",path_json.name)
+        print("Generation Maxed out ! Only generated ",generated_pic," augmented copy of ",parent_folder.parts[len(parent_folder.parts)-2])
     return  generated_pic
+
 
 
 def augment_all_vid(input_folder_path: Path,
@@ -499,7 +503,7 @@ def augment_all_vid(input_folder_path: Path,
             total_cpy += grid_augment(json,grid)
     t2 = time.time()
     time_total = (t2 - t1 ) / 60
-    print("Increased data from ",len(list_dir)-1," to ",total_cpy,"in ", time_total)
+    print("Increased data from ",len(list_dir)-1," to ",total_cpy,"in ", round(time_total,2)," minutes")
 
 
 
