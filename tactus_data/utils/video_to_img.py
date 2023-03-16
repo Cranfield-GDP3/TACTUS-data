@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import cv2
 
 
@@ -10,6 +9,7 @@ def extract_frames(
     """
     Extract frames from a video source at a specific frame rate.
     Extracted frames will be name with leading 0 (e.g. '0004.jpg').
+
     Parameters
     ----------
     video_path : Path
@@ -19,10 +19,11 @@ def extract_frames(
     desired_fps : int
         The fps we want to have
     """
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     cap = cv2.VideoCapture(str(video_path))
     fps = cap.get(cv2.CAP_PROP_FPS)
+
     if desired_fps is None:
         extract_frequency = 1
     else:
@@ -37,9 +38,9 @@ def extract_frames(
         if frame is None:
             break
         if count % extract_frequency == 0:
-                frame_name = str(count).zfill(n_frame_len)
-                save_path = output_dir.absolute() / f"{frame_name}.jpg"
-                cv2.imwrite(str(save_path), frame)
+            frame_name = str(count).zfill(n_frame_len)
+            save_path = output_dir.absolute() / f"{frame_name}.jpg"
+            cv2.imwrite(str(save_path), frame)
 
         count += 1
 
