@@ -128,7 +128,7 @@ def flip_h_2d(input_folder_path: Path,
                         resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
                 if not _check_on_frame(flip_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                        resolution):
-                    augment_ok = False
+                    augment_ok = True
         if augment_ok:
             with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
                 json.dump(flip_data, outfile)
@@ -231,7 +231,7 @@ def rotation_2d(input_folder_path: Path,
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
                     if not _check_on_frame(rotated_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                            resolution):
-                        augment_ok = False
+                        augment_ok = True
             if augment_ok:
                 new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
                 with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
@@ -301,7 +301,7 @@ def noise_2d(input_folder_path: Path,
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_magnitude * random.random() * yscale * random.choice([-1, 1])
                     if not _check_on_frame(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                            resolution):
-                        augment_ok = False
+                        augment_ok = True
             if augment_ok:
                 new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
                 with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
@@ -399,7 +399,7 @@ def camera_distance_2d(input_folder_path: Path,
                     _uniform_scale(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                    distance, focal_length, resolution))
                 if not _check_on_frame(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"], resolution):
-                    augment_ok = False
+                    augment_ok = True
         if augment_ok:
             new_json_name.append(file_name)
             with open(str(output_folder_path) + "\\" + str(file_name),
