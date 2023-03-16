@@ -79,6 +79,7 @@ def extract_skeletons(
     for _ in input_dir.glob(f"*/{fps_folder_name}"):
         nbr_of_videos += 1
 
+    discarded_videos = []
     for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
         skeletons_output_dir = (output_dir
@@ -92,12 +93,17 @@ def extract_skeletons(
 
         try:
             tracked_json = retrack(extracted_frames_dir, formatted_json)
+        except IndexError:
+            discarded_videos.append(video_name)
+        else:
             filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
 
             with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
                 json.dump(filtered_json, fp)
-        except IndexError:
-            logging.warning("... discarding %s from %s", video_name, dataset.name)
+
+    if len(discarded_videos) > 0:
+        logging.warning("Discarding %s videos from %s:", len(discarded_videos), dataset.name)
+        logging.warning("\t %s", "\t".join(discarded_videos))
 
 
 def _fps_folder_name(fps: int):
