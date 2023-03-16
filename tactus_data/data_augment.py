@@ -1,5 +1,6 @@
 import json
 import random
+import time
 from itertools import product
 from enum import Enum
 from pathlib import Path
@@ -44,7 +45,9 @@ def _check_on_frame(keypoints: list,
     flag_ok = True
     for i in range(0, len(keypoints), 3):
         if keypoints[i] > resolution[0] or keypoints[i] < 0 or keypoints[i+1] > resolution[1] or keypoints[i+1] < 0:
+            print("Value ",keypoints[i],"    Resolution :",resolution)
             flag_ok = False
+            return flag_ok
     return flag_ok
 
 
@@ -64,7 +67,7 @@ def plot_skeleton_2d(path_json: Path,
         data = json.load(file)
     img = np.asarray(Image.open(path_frame))
     plt.imshow(img)
-    for skeletons in data['frames'][0]['skeletons']:
+    for skeletons in data['frames'][23]['skeletons']:
         keypoints = skeletons["keypoints"]
         keypoints_x = []
         keypoints_y = []
@@ -111,7 +114,6 @@ def flip_h_2d(input_folder_path: Path,
     output_folder_path : Path,
                   path of the folder where the new generated json are saved
     """
-
     augment_ok = True
     for file_name in json_name:
         with open(str(input_folder_path) + "\\" + file_name) as file:
@@ -131,7 +133,7 @@ def flip_h_2d(input_folder_path: Path,
             with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
                 json.dump(flip_data, outfile)
         else:
-            print(str(file_name) + " is out of frame")
+            print(str(file_name) + " is out of frame in flip augment")
     return json_name
 
 
@@ -236,7 +238,7 @@ def rotation_2d(input_folder_path: Path,
                           'w') as outfile:
                     json.dump(rotated_data, outfile)
             else:
-                print(new_json_name[len(new_json_name)-1] + " is out of frame")
+                print(new_json_name[len(new_json_name)-1] + " is out of frame in rotation augment")
                 new_json_name = json_name
     return new_json_name
 
@@ -306,7 +308,7 @@ def noise_2d(input_folder_path: Path,
                           'w') as outfile:
                     json.dump(noisy_data, outfile)
             else:
-                print(new_json_name[len(new_json_name)-1] + " is out of frame")
+                print(new_json_name[len(new_json_name)-1] + " is out of frame in noise augment")
                 new_json_name = json_name
     return new_json_name
 
@@ -404,36 +406,13 @@ def camera_distance_2d(input_folder_path: Path,
                       'w') as outfile:
                 json.dump(scaled_data, outfile)
         else:
-            print(str(file_name).strip(".json") + "_scale" + str(distance) + " is out of frame")
+            print(str(file_name).strip(".json") + "_scale" + str(distance) + " is out of frame in scaling augment")
             new_json_name = json_name
     return new_json_name
 
 
-def anthropomorphic_scale(factor: float,
-                          keypoints: list):
-    factor = 1
-
-
-def skeletons_scale():
-    """
-    Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
-    with different factors the goal is to create interaction with different size individual
-
-    Parameters
-    ----------
-    path_file : Path,
-                path where the original json files are located
-    path_output : Path,
-                  path where the new generated data are saved
-    max_factor : float,
-                 Max value of the size change factor
-    max_diff_factor : float,
-                      Maximum difference between the factor of all skeletons
-    """
-
-
 def grid_augment(path_json: Path,
-                 grid: list[list],
+                 grid: list[list[list]],
                  max_copy: int = -1):
     """
     Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
@@ -487,8 +466,8 @@ def grid_augment(path_json: Path,
                       'w') as outfile:
                 json.dump(original_data, outfile)
             # No parameter on flip so True / false
-            if indices[0] == [True]:
-                result_flip = flip_h_2d(path_json, [new_name], path_json)
+            if indices[0] == (True,):
+                result_flip = flip_h_2d(parent_folder, [new_name], path_json)
             else:
                 result_flip = [new_name]
             result_cam = camera_distance_2d(parent_folder, result_flip, parent_folder, indices[1][0], indices[1][1])
@@ -501,13 +480,28 @@ def grid_augment(path_json: Path,
         print("Generated :", generated_pic, " augmented copy of ", path_json.name)
     else :
         print("Generation Maxed out ! Only generated ",generated_pic," augmented copy of ",path_json.name)
+    return  generated_pic
 
 
-def augment_all_vid(path_file: Path,
+def augment_all_vid(input_folder_path: Path,
+                    grid: list[list[list]],
                     fps: int,
                     max_copy: int = -1,
                     random_seed: int = 30000):
-    i = 3
+    random.seed(random_seed)
+    total_cpy = 0
+    t1 = time.time()
+    list_dir = list(input_folder_path.iterdir())
+    for index in range(len(list_dir)-2):
+        vid_path = Path(str(list_dir[index]) + "\\" + str(fps) + "fps")
+        vid_name = vid_path.glob('**/*.json')
+        for json in vid_name:
+            total_cpy += grid_augment(json,grid)
+    t2 = time.time()
+    time_total = (t2 - t1 ) / 60
+    print("Increased data from ",len(list_dir)-1," to ",total_cpy,"in ", time_total)
+
+
 
 
 
