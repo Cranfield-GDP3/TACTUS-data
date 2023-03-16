@@ -98,8 +98,21 @@ def label_video_frame(path_file: Path,
         data_dic = {}
         data_dic["resolution"] = resolution
         data_dic["classes"] = []
-
+        data_dic["offender"] = []
+        action_number =1
+        offender = -1
         while action_left == 1:
+            while offender == -1:
+                print("Action number",action_number, "\nWho is doing the action ?\nIf left person press 1 if right person press 2")
+                key = keyboard.read_key()
+                time.sleep(0.3)
+                if key == "1":
+                    offender = 1
+                elif key == "2":
+                    offender = 2
+                else:
+                    print("\nBad input retry\n")
+            data_dic["offender"].append(offender)
             start_frame = _change_frame(current_frame,frame_vid,video_position,"Start Frame")
             end_frame = _change_frame(start_frame, frame_vid, video_position, "End Frame")
             data_dic["classes"].append({"classification" : label,
@@ -108,8 +121,8 @@ def label_video_frame(path_file: Path,
             print("Are they any other action in the video ?\n Press any key to continue or Enter to go to the next video")
             key_press = keyboard.read_key()
             if key_press == "enter":
-                action_left=0
-
+                action_left = 0
+            action_number += 1
         with open(str(path_output) + '\\' + vid_path.stem +'\\' + vid_path.stem + '.label.json', "w") as outfile:
             json.dump(data_dic,
                       outfile)
@@ -134,3 +147,6 @@ def mkdir(raw_dir: Path,
         dirName = target_dir + '/' + dirName
         if not os.path.exists(dirName):
             os.mkdir(dirName)
+
+
+label_video_frame(Path("C:\\Users\\paulb\\Downloads\\ut-interaction_segmented_set1\\"),Path("C:\\Users\\paulb\\Downloads\\ut-interaction_segmented_set1"))
