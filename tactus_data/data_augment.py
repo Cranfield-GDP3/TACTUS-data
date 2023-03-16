@@ -52,7 +52,8 @@ def _check_on_frame(keypoints: list,
 
 
 def plot_skeleton_2d(path_json: Path,
-                     path_frame: Path):
+                     path_frame: Path,
+                     show_frame: bool = True):
     """
     Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different augment
 
@@ -62,13 +63,12 @@ def plot_skeleton_2d(path_json: Path,
                 path where the json file is located
     path_frame : Path,
                  path where the frame file is located
+    show_frame : bool,
+                 If false allows you to see only skeleton
     """
     with open(path_json) as file:
         data = json.load(file)
     fig, ax = plt.subplots()
-    img = np.asarray(Image.open(path_frame))
-
-    plt.imshow(img)
     for skeletons in data['frames'][20]['skeletons']:
         keypoints = skeletons["keypoints"]
         keypoints_x = []
@@ -98,7 +98,13 @@ def plot_skeleton_2d(path_json: Path,
         ax.scatter(keypoints_x, keypoints_y)
         for i in list_link:
             ax.plot([keypoints_x[i[0].value],keypoints_x[i[1].value]],[keypoints_y[i[0].value],keypoints_y[i[1].value]])
-    #ax.set_ylim(ax.get_ylim()[::-1])  # (0,0) in top left hand corner
+
+
+    if show_frame == True:
+        img = np.asarray(Image.open(path_frame))
+        plt.imshow(img)
+    else :
+        ax.set_ylim(ax.get_ylim()[::-1])  # (0,0) in top left hand corner
     plt.show()
 
 
