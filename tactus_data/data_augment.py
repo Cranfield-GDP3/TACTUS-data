@@ -32,20 +32,9 @@ class BK(Enum):
 
 def _check_on_frame(keypoints: list,
                     resolution: list) -> bool:
-    """
-    Plot the 2D skeleton on top of the corresponding frame for testing purpose on the different augment
-
-    Parameters
-    ----------
-    keypoints : list,
-                list of the new generated keypoints to check
-    resolution : list,
-                 list of [x,y] resolution of the original frame
-        """
     flag_ok = True
     for i in range(0, len(keypoints), 3):
         if keypoints[i] > resolution[0] or keypoints[i] < 0 or keypoints[i+1] > resolution[1] or keypoints[i+1] < 0:
-            # print("Value ",keypoints[i],"    Resolution :",resolution)
             flag_ok = False
             return flag_ok
     return flag_ok
@@ -56,7 +45,8 @@ def plot_skeleton_2d(path_json: Path,
                      frame_number: int = 0,
                      show_frame: bool = True):
     """
-    Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different augment
+    Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different
+    augment
 
     Parameters
     ----------
@@ -64,6 +54,8 @@ def plot_skeleton_2d(path_json: Path,
                 path where the json file is located
     path_frame : Path,
                  path where the frame file is located
+    frame_number : int,
+                   Number of the frame you want to plot
     show_frame : bool,
                  If false allows you to see only skeleton
     """
@@ -84,31 +76,30 @@ def plot_skeleton_2d(path_json: Path,
             keypoints_y.append(keypoints[i + 1])
             confidence.append(keypoints[i + 2])
 
-        list_link =[(BK.RAnkle,BK.RKnee),
-                    (BK.LAnkle, BK.LKnee),
-                    (BK.RKnee, BK.RHip),
-                    (BK.LKnee, BK.LHip),
-                    (BK.RHip,BK.LHip),
-                    (BK.RHip,BK.RShoulder),
-                    (BK.LHip,BK.LShoulder),
-                    (BK.RShoulder,BK.LShoulder),
-                    (BK.RShoulder,BK.RElbow),
-                    (BK.RElbow,BK.RWrist),
-                    (BK.LShoulder,BK.LElbow),
-                    (BK.LElbow,BK.LWrist),
-                    (BK.Nose,BK.LEye),
-                    (BK.Nose,BK.REye),
-                    (BK.LEye,BK.LEar),
-                    (BK.REye,BK.REar)]
+        list_link = [(BK.RAnkle, BK.RKnee),
+                     (BK.LAnkle, BK.LKnee),
+                     (BK.RKnee, BK.RHip),
+                     (BK.LKnee, BK.LHip),
+                     (BK.RHip, BK.LHip),
+                     (BK.RHip, BK.RShoulder),
+                     (BK.LHip, BK.LShoulder),
+                     (BK.RShoulder, BK.LShoulder),
+                     (BK.RShoulder, BK.RElbow),
+                     (BK.RElbow, BK.RWrist),
+                     (BK.LShoulder, BK.LElbow),
+                     (BK.LElbow, BK.LWrist),
+                     (BK.Nose, BK.LEye),
+                     (BK.Nose, BK.REye),
+                     (BK.LEye, BK.LEar),
+                     (BK.REye, BK.REar)]
         ax.scatter(keypoints_x, keypoints_y)
         for i in list_link:
-            ax.plot([keypoints_x[i[0].value],keypoints_x[i[1].value]],[keypoints_y[i[0].value],keypoints_y[i[1].value]])
-
-
-    if show_frame == True:
+            ax.plot([keypoints_x[i[0].value], keypoints_x[i[1].value]],
+                    [keypoints_y[i[0].value], keypoints_y[i[1].value]])
+    if show_frame:
         img = np.asarray(Image.open(path_frame))
         plt.imshow(img)
-    else :
+    else:
         ax.set_ylim(ax.get_ylim()[::-1])  # (0,0) in top left hand corner
     plt.show()
 
@@ -263,10 +254,9 @@ def _skel_width_height(keypoints: list):
     xmin = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
     ymax = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
     ymin = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
-
     xscale = (int(xmax) - int(xmin)) / 100
     yscale = (int(ymax) - int(ymin)) / 100
-    return xscale,yscale
+    return xscale, yscale
 
 
 def noise_2d(input_folder_path: Path,
@@ -306,13 +296,15 @@ def noise_2d(input_folder_path: Path,
                     xscale, yscale = _skel_width_height(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"])
                     noise_for_facex = noise_magnitude * random.random() * xscale * random.choice([-1, 1])
                     noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
-                    for point in range(0,5*3,3):  # uniform noise for the face
+                    for point in range(0, 5*3, 3):  # uniform noise for the face
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facey
                     for point in range(5*3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_magnitude * random.random() * xscale * random.choice([-1, 1])
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_magnitude * random.random() * yscale * random.choice([-1, 1])
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
+                            noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
+                            noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
                     if not _check_on_frame(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                            resolution):
                         augment_ok = True
@@ -388,7 +380,7 @@ def camera_distance_2d(input_folder_path: Path,
     distance : float,
                change the camera distance by a positive or negative number of meter to the scene
                negative means closer positive means further. Don't put -10 as value since it will mean the camera is
-               inside of the picture (arbitrarly put at 10 meters)
+               inside the picture (arbitrary put at 10 meters)
     focal_length : float,
                    The focal length of the camera in millimetres, it impacts the angle of view of the camera and
                    will influence the change of scale compare to the distance. Here is a usual CCTV focal length
@@ -492,10 +484,10 @@ def grid_augment(path_json: Path,
             counter += 1
     if max_copy == -1:
         print("Generated :", generated_pic, " augmented copy of ", parent_folder.parts[len(parent_folder.parts)-2])
-    else :
-        print("Generation Maxed out ! Only generated ",generated_pic," augmented copy of ",parent_folder.parts[len(parent_folder.parts)-2])
-    return  generated_pic
-
+    else:
+        print("Generation Maxed out ! Only generated ", generated_pic, " augmented copy of ",
+              parent_folder.parts[len(parent_folder.parts)-2])
+    return generated_pic
 
 
 def augment_all_vid(input_folder_path: Path,
@@ -510,14 +502,8 @@ def augment_all_vid(input_folder_path: Path,
     for index in range(len(list_dir)-2):
         vid_path = Path(str(list_dir[index]) + "\\" + str(fps) + "fps")
         vid_name = vid_path.glob('**/*.json')
-        for json in vid_name:
-            total_cpy += grid_augment(json,grid)
+        for injson in vid_name:
+            total_cpy += grid_augment(injson, grid, max_copy)
     t2 = time.time()
-    time_total = (t2 - t1 ) / 60
-    print("Increased data from ",len(list_dir)-1," to ",total_cpy,"in ", round(time_total,2)," minutes")
-
-
-
-
-
-
+    time_total = (t2 - t1) / 60
+    print("Increased data from ", len(list_dir)-1, " to ", total_cpy, "in ", round(time_total, 2), " minutes")
