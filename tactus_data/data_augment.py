@@ -45,7 +45,8 @@ def plot_skeleton_2d(path_json: Path,
                      frame_number: int = 0,
                      show_frame: bool = True):
     """
-    Plot the 2D skeleton (keypoint and limbs) on top of the corresponding frame for testing purpose on the different
+    Plot the 2D skeleton (keypoint and limbs) on top of the
+    corresponding frame for testing purpose on the different
     augment
 
     Parameters
@@ -115,9 +116,11 @@ def flip_h_2d(input_folder_path: Path,
     input_folder_path : Path,
                 path of the folder where the original json are located
     json_name : list[str],
-                a list of json files names that are going to be updated Ex: ["file.json"]
+                a list of json files names that are going to be updated
+                Ex: ["file.json"]
     output_folder_path : Path,
-                  path of the folder where the new generated json are saved
+                  path of the folder where the new generated json are
+                  saved
     """
     augment_ok = True
     for file_name in json_name:
@@ -147,20 +150,25 @@ def _rotate_center(keypoints: list,
                    center_of_rotation: tuple
                    ):
     """
-    Generate 1 json per number of copy asked + the original one. Each copy is rotated more and more until it reaches the
-    max_angle. You can pick where you want the center of rotation of the skeleton to be
+    Generate 1 json per number of copy asked + the original one. Each
+    copy is rotated more and more until it reaches the max_angle. You
+    can pick where you want the center of rotation of the skeleton to
+    be
 
     Parameters
     ----------
     keypoints : list,
-                all the 17 keypoints coordinates x,y,confidence (total of 51 values)
+                all the 17 keypoints coordinates x,y,confidence
+                (total of 51 values)
     angle : float,
             value of the rotation angle in radian
-    center_of_rotation : tuple, allow to compute the center or rotation for the skeleton, use BK
-    class as reference, will do the center value among all the keypoint coordinates in the tuple
+    center_of_rotation : tuple, allow to compute the center or rotation
+    for the skeleton, use BK class as reference, will do the center
+    value among all the keypoint coordinates in the tuple
     """
 
-    # Compute skeleton center of rotation depending on center_of_rotation parameter
+    # Compute skeleton center of rotation depending on
+    # center_of_rotation parameter
     centerx = 0
     centery = 0
     for i in center_of_rotation:
@@ -198,24 +206,30 @@ def rotation_2d(input_folder_path: Path,
                 num_copy: int = 3,
                 rotate_center: tuple = (BK.LAnkle, BK.RAnkle)):
     """
-    Generate 1 json per number of copy asked + the original one. Each copy is rotated more and more until it reaches the
-    max_angle. You can pick where you want the center of rotation of the skeleton to be
+    Generate 1 json per number of copy asked + the original one. Each
+    copy is rotated more and more until it reaches the max_angle. You
+    can pick where you want the center of rotation of the skeleton to be
 
     Parameters
     ----------
     input_folder_path : Path,
                 path of the folder where the original json are located
     json_name : list[str],
-                a list of json files names that are going to be updated Ex: ["file.json"]
+                a list of json files names that are going to be updated
+                Ex: ["file.json"]
     output_folder_path : Path,
-                  path of the folder where the new generated json are saved
+                         path of the folder where the new generated
+                        json are saved
     max_angle : float,
                 value of the max rotation angle in degree
     num_copy : int,
-               number of copy to make with slight rotation until it reaches max_angle
+               number of copy to make with slight rotation until it
+               reaches max_angle
     rotate_center : tuple,
-                    allow to compute the center or rotation for the skeleton, use BK class as reference,
-                    will do the center value among all the keypoint coordinates in the tuple
+                    allow to compute the center or rotation for the
+                    skeleton, use BK class as reference, will do the
+                    center value among all the keypoint coordinates in
+                    the tuple
     """
     augment_ok = True
     rad_angle = np.radians(max_angle)
@@ -265,21 +279,27 @@ def noise_2d(input_folder_path: Path,
              num_copy: int = 3,
              noise_magnitude: float = 4.0):
     """
-    Generate 1 json per number of copy asked + the original one. Add randomly add/remove random noise of 1% of
-    the skeleton maximum amplitude to each keypoints coordinates, this 1% max value is multiplied by noise_magnitude
+    Generate 1 json per number of copy asked + the original one. Add
+    randomly add/remove random noise of 1% of the skeleton maximum
+    amplitude to each keypoints coordinates, this 1% max value is
+    multiplied by noise_magnitude
 
     Parameters
     ----------
     input_folder_path : Path,
                 path of the folder where the original json are located
     json_name : list[str],
-                a list of json files names that are going to be updated Ex: ["file.json"]
+                a list of json files names that are going to be updated
+                Ex: ["file.json"]
     output_folder_path : Path,
-                  path of the folder where the new generated json are saved
+                  path of the folder where the new generated json are
+                  saved
     num_copy : int,
-               number of copy to make with slight rotation until it reaches max_angle
+               number of copy to make with slight rotation until it
+               reaches max_angle
     noise_magnitude : float,
-                      coefficient the random noise of maximum 1% of total skeleton amplitude is multiplied by
+                      coefficient the random noise of maximum 1% of
+                      total skeleton amplitude is multiplied by
     """
     augment_ok = True
     new_json_name = []
@@ -365,26 +385,35 @@ def camera_distance_2d(input_folder_path: Path,
                        distance: float,
                        focal_length: float = 3.6):
     """
-    Generate 1 json with a new scaling of skeletons. The distance parameter allows you to virtually move the camera
-    further or closer to the frame so that the scale change accordingly, distance is in meters represent the distance
-    added on the original position of the camera, if the camera goes closer(-) / further(+).
+    Generate 1 json with a new scaling of skeletons. The distance
+    parameter allows you to virtually move the camera further or closer
+    to the frame so that the scale change accordingly, distance is in
+    meters represent the distance added on the original position of the
+    camera, if the camera goes closer(-) / further(+).
 
     Parameters
     ----------
     input_folder_path : Path,
                 path of the folder where the original json are located
     json_name : list[str],
-                a list of json files names that are going to be updated Ex: ["file.json"]
+                a list of json files names that are going to be updated
+                Ex: ["file.json"]
     output_folder_path : Path,
-                  path of the folder where the new generated json are saved
+                  path of the folder where the new generated json are
+                  saved
     distance : float,
-               change the camera distance by a positive or negative number of meter to the scene
-               negative means closer positive means further. Don't put -10 as value since it will mean the camera is
-               inside the picture (arbitrary put at 10 meters)
+               change the camera distance by a positive or negative
+               number of meter to the scene negative means closer
+               positive means further. Don't put -10 as value since it
+               will mean the camera is inside the picture
+               (arbitrary put at 10 meters)
     focal_length : float,
-                   The focal length of the camera in millimetres, it impacts the angle of view of the camera and
-                   will influence the change of scale compare to the distance. Here is a usual CCTV focal length
-                   with the angle of view of the camera:
+                   The focal length of the camera in millimetres, it
+                   impacts the angle of view of the camera and will
+                   influence the change of scale compare to the
+                   distance. Here is a usual CCTV focal length with the
+                   angle of view of the camera:
+
                     Focal Lenght / Angle of View / Clear view
                     -   2.8 mm   /      108°     /    5 m
                     -   3.6 mm   /      82.6°    /    8 m
@@ -421,28 +450,36 @@ def grid_augment(path_json: Path,
                  grid: list[list[list]],
                  max_copy: int = -1):
     """
-    Generate 1 json with new skeleton sizes, it is possible to change size of multiple skeleton on a picture
-    with different factors the goal is to create interaction with different size individual
+    Generate 1 json with new skeleton sizes, it is possible to change
+    size of multiple skeleton on a picture with different factors the
+    goal is to create interaction with different size individual
 
     Parameters
     ----------
     path_json : Path,
                 path where the original json file is located
-    grid : list[list],
-           the grid of value that will be use for the grid search the gris is a list of list, each element
-           of the list a list of all the argument of each augment can take without including the path,
-           in the form of another list :
-           [list_flip_h, list_camera_distance_2d,list_rotation_2d,list_noise_2d]
+    grid : list[list[list]],
+           the grid of value that will be use for the grid search the
+           gris is a list of list, each element of the list a list of
+           all the argument of each augment can take without including
+           the path, in the form of another list :
+
+           [list_flip_h, list_camera_distance_2d,list_rotation_2d,
+           list_noise_2d]
+
            Ex:
            list_flip_h = [True, False]
            list_camera_distance_2d =[distance,focal_length]
            list_rotation_2d = [max_angle,num_copy,rotate_center]
            list_noise_2d = [num_copy, noise_magnitude]
-           If you don't want an augment to be used just put an empty list
+           If you don't want an augment to be used just put an empty
+           list
            list_camera_distance_2d :
-            distance = [-5,-2, 2, 5, 10, 15] / focal_length = [2.8, 3.6, 4.0, 6.0]
+            - distance = [-5,-2, 2, 5, 10, 15]
+            - focal_length = [2.8, 3.6, 4.0, 6.0]
     max_copy : int,
-               Number of copy of the original file are going to be generated
+               Number of copy of the original file are going to be
+               generated
     """
     parent_folder = path_json.parent
     list_flip_h = grid[0]
@@ -495,6 +532,44 @@ def augment_all_vid(input_folder_path: Path,
                     fps: int,
                     max_copy: int = -1,
                     random_seed: int = 30000):
+    """
+    Generate 1 json with a new scaling of skeletons. The distance
+    parameter allows you to virtually move the camera further or closer
+    to the frame so that the scale change accordingly, distance is in
+    meters represent the distance added on the original position of the
+    camera, if the camera goes closer(-) / further(+).
+
+    Parameters
+    ----------
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    grid : list[list[list]],
+           the grid of value that will be use for the grid search the
+           gris is a list of list, each element of the list a list of
+           all the argument of each augment can take without including
+           the path, in the form of another list :
+
+           [list_flip_h, list_camera_distance_2d,list_rotation_2d,
+           list_noise_2d]
+
+           Ex:
+           list_flip_h = [True, False]
+           list_camera_distance_2d =[distance,focal_length]
+           list_rotation_2d = [max_angle,num_copy,rotate_center]
+           list_noise_2d = [num_copy, noise_magnitude]
+           If you don't want an augment to be used just put an empty
+           list
+           list_camera_distance_2d :
+            - distance = [-5,-2, 2, 5, 10, 15]
+            - focal_length = [2.8, 3.6, 4.0, 6.0]
+    fps : int,
+          pick the fps folder you want to augment for each video
+          (the fps folder must exist)
+    max_copy : int,
+               Number of copy of the original file are going to be
+               generated
+    random_seed : value of the random seed to replicated same training data
+    """
     random.seed(random_seed)
     total_cpy = 0
     t1 = time.time()
