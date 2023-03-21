@@ -23,7 +23,9 @@ long_description = read("README.md")
 install_requires = [
     "requests",
     "cython",
-    "deep-sort-realtime"
+    "deep-sort-realtime",
+    "torch",
+    "TACTUS - yolov7",
 ]
 tests_require = [
     "pytest",
