@@ -3,10 +3,12 @@ from enum import Enum
 import json
 import logging
 from tqdm import tqdm
+from tactus_yolov7 import Yolov7
 
 from tactus_data.utils import video_to_img
-from tactus_data.utils.yolov7 import yolov7
 from tactus_data.utils.retracker import deepsort
+from tactus_data.utils.yolov7 import yolov7
+from tactus_data.utils.yolov7 import MODEL_WEIGHTS_PATH
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -52,7 +54,8 @@ def extract_skeletons(
         dataset: NAMES,
         input_dir: Path,
         output_dir: Path,
-        fps: int
+        fps: int,
+        device: str
     ):
     """
     Extract skeletons from a folder containing video frames using
@@ -71,6 +74,9 @@ def extract_skeletons(
         `output_dir/dataset_name/fps/name.json`
     fps : int
         the fps of the extracted frames
+    device : str
+        the computing device to use with yolov7.
+        Can be 'cpu', 'cuda:0' etc.
     """
     input_dir = input_dir / dataset.name
     fps_folder_name = _fps_folder_name(fps)
@@ -80,6 +86,9 @@ def extract_skeletons(
         nbr_of_videos += 1
 
     discarded_videos = []
+
+    model = Yolov7(MODEL_WEIGHTS_PATH, device)
+
     for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
         skeletons_output_dir: Path = (output_dir
@@ -88,7 +97,7 @@ def extract_skeletons(
                                       / fps_folder_name
                                       / "yolov7.json")
 
-        formatted_json = yolov7(extracted_frames_dir)
+        formatted_json = yolov7(extracted_frames_dir, model)
 
         try:
             tracked_json = deepsort(extracted_frames_dir, formatted_json)
