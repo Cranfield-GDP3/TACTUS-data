@@ -30,16 +30,6 @@ class BK(Enum):
     RAnkle = 16
 
 
-def _check_on_frame(keypoints: list,
-                    resolution: list) -> bool:
-    flag_ok = True
-    for i in range(0, len(keypoints), 3):
-        if keypoints[i] > resolution[0] or keypoints[i] < 0 or keypoints[i+1] > resolution[1] or keypoints[i+1] < 0:
-            flag_ok = False
-            return flag_ok
-    return flag_ok
-
-
 def plot_skeleton_2d(path_json: Path,
                      path_frame: Path,
                      frame_number: int = 0,
@@ -122,7 +112,6 @@ def flip_h_2d(input_folder_path: Path,
                   path of the folder where the new generated json are
                   saved
     """
-    augment_ok = True
     for file_name in json_name:
         with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
@@ -134,14 +123,9 @@ def flip_h_2d(input_folder_path: Path,
                 for point in range(0, len(flip_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                         resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
-                if not _check_on_frame(flip_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
-                                       resolution):
-                    augment_ok = True
-        if augment_ok:
-            with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
-                json.dump(flip_data, outfile)
-        else:
-            print(str(file_name) + " is out of frame in flip augment")
+
+        with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
+            json.dump(flip_data, outfile)
     return json_name
 
 
@@ -231,14 +215,12 @@ def rotation_2d(input_folder_path: Path,
                     center value among all the keypoint coordinates in
                     the tuple
     """
-    augment_ok = True
     rad_angle = np.radians(max_angle)
     list_angle = np.linspace(0, rad_angle, num_copy + 1)
     new_json_name = []
     for file_name in json_name:
         with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
-            resolution = data["resolution"]
             num_frame = len(data['frames'])
         new_json_name.append(file_name)
         for angl in range(1, len(list_angle)):  # start 1 to not take the original
@@ -248,17 +230,10 @@ def rotation_2d(input_folder_path: Path,
                     rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'] = (
                         _rotate_center(keypoints=rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'],
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
-                    if not _check_on_frame(rotated_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
-                                           resolution):
-                        augment_ok = True
-            if augment_ok:
-                new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
-                with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
-                          'w') as outfile:
-                    json.dump(rotated_data, outfile)
-            else:
-                print(new_json_name[len(new_json_name)-1] + " is out of frame in rotation augment")
-                new_json_name = json_name
+            new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
+            with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
+                      'w') as outfile:
+                json.dump(rotated_data, outfile)
     return new_json_name
 
 
@@ -301,12 +276,10 @@ def noise_2d(input_folder_path: Path,
                       coefficient the random noise of maximum 1% of
                       total skeleton amplitude is multiplied by
     """
-    augment_ok = True
     new_json_name = []
     for file_name in json_name:
         with open(str(input_folder_path) + "\\" + file_name) as file:
             data = json.load(file)
-            resolution = data["resolution"]
             num_frame = len(data['frames'])
         new_json_name.append(file_name)
         for copy in range(num_copy):
@@ -325,17 +298,10 @@ def noise_2d(input_folder_path: Path,
                             noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
                             noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
-                    if not _check_on_frame(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
-                                           resolution):
-                        augment_ok = True
-            if augment_ok:
-                new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
-                with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
-                          'w') as outfile:
-                    json.dump(noisy_data, outfile)
-            else:
-                print(new_json_name[len(new_json_name)-1] + " is out of frame in noise augment")
-                new_json_name = json_name
+            new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
+            with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
+                      'w') as outfile:
+                json.dump(noisy_data, outfile)
     return new_json_name
 
 
@@ -420,7 +386,6 @@ def camera_distance_2d(input_folder_path: Path,
                     -   4.0 mm   /      38°      /   12 m
                     -   6.0 mm   /      54°      /   18 m
         """
-    augment_ok = True
     new_json_name = []
     for file_name in json_name:
         with open(str(input_folder_path) + "\\" + file_name) as file:
@@ -433,16 +398,10 @@ def camera_distance_2d(input_folder_path: Path,
                 scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"] = (
                     _uniform_scale(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                    distance, focal_length, resolution))
-                if not _check_on_frame(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"], resolution):
-                    augment_ok = True
-        if augment_ok:
-            new_json_name.append(file_name)
-            with open(str(output_folder_path) + "\\" + str(file_name),
-                      'w') as outfile:
-                json.dump(scaled_data, outfile)
-        else:
-            print(str(file_name).strip(".json") + "_scale" + str(distance) + " is out of frame in scaling augment")
-            new_json_name = json_name
+        new_json_name.append(file_name)
+        with open(str(output_folder_path) + "\\" + str(file_name),
+                  'w') as outfile:
+            json.dump(scaled_data, outfile)
     return new_json_name
 
 
