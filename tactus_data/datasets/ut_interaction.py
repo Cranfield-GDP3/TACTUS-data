@@ -49,7 +49,7 @@ def download():
         response = requests.get(zip_file_url, timeout=1000)
 
         with zipfile.ZipFile(io.BytesIO(response.content)) as zip_response:
-            zip_response.extractall(dataset.RAW_DIR / NAME)
+            zip_response.extractall(dataset.RAW_DIR / NAME.name)
 
 
 def label_from_video_name(video_name: str) -> str:
