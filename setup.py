@@ -23,7 +23,10 @@ long_description = read("README.md")
 install_requires = [
     "requests",
     "cython",
-    "deep-sort-realtime"
+    "deep-sort-realtime",
+    "matplotlib",
+    "Pillow",
+    "numpy"
 ]
 tests_require = [
     "pytest",
