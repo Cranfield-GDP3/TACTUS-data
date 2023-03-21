@@ -15,16 +15,6 @@
 
 You can install torch and torchvision **with cuda** via pip. Get the pip install command from [the official website](https://pytorch.org/get-started/locally/).
 
-## Yolov7
-
-Download and install [Yolov7](https://github.com/Cranfield-GDP3/yolov7) on your machine with the follwing command:
-
-```bash
-git clone https://github.com/Cranfield-GDP3/yolov7
-cd yolov7
-python -m pip install -e .
-```
-
 ## tactus-data
 
 You can create an editable install of this library ([see more](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)) with the following command:
