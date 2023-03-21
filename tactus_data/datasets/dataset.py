@@ -41,8 +41,9 @@ def extract_frames(
         The video extensions (avi, mp4, etc.)
     """
     input_dir = input_dir / dataset.name
+    nbr_of_videos = _count_files_in_dir(input_dir, f"*.{video_extension}")
 
-    for video_path in input_dir.rglob(f"*.{video_extension}"):
+    for video_path in tqdm(iterable=input_dir.rglob(f"*.{video_extension}"), total=nbr_of_videos):
         frame_output_dir = (output_dir
                             / dataset.name
                             / video_path.stem
@@ -81,9 +82,7 @@ def extract_skeletons(
     input_dir = input_dir / dataset.name
     fps_folder_name = _fps_folder_name(fps)
 
-    nbr_of_videos = 0
-    for _ in input_dir.glob(f"*/{fps_folder_name}"):
-        nbr_of_videos += 1
+    nbr_of_videos = _count_files_in_dir(input_dir, f"*/{fps_folder_name}")
 
     discarded_videos = []
 
@@ -128,3 +127,10 @@ def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: list[str]):
                 del skeleton[key]
 
     return formatted_json
+
+def _count_files_in_dir(directory: Path, pattern: str):
+    nbr_of_files = 0
+    for _ in directory.rglob(pattern):
+        nbr_of_files += 1
+
+    return nbr_of_files
