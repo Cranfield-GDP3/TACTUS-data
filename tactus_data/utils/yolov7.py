@@ -27,7 +27,8 @@ def _download_weights():
     """Download yolov7 pose weights"""
 
     url = "https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt"
-    download_url_to_file(url, MODEL_WEIGHTS_PATH)
+    MODEL_WEIGHTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    download_url_to_file(url, MODEL_WEIGHTS_PATH.absolute())
 
 def _check_weights():
     """check that the weights file exists"""
