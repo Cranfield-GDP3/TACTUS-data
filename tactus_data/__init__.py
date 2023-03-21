@@ -3,4 +3,3 @@
 __version__ = "0.0.0"
 
 from .datasets import ut_interaction
-from .utils.alphapose import alphapose_skeletonisation

@@ -33,7 +33,7 @@ def extract_frames(fps: int = 10):
 def extract_skeletons(fps: int = 10):
     """
     Extract skeletons from a folder containing video frames using
-    alphapose.
+    yolov7.
 
     Parameters
     ----------

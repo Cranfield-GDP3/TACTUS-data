@@ -1,5 +1,6 @@
 from pathlib import Path
 import cv2
+from tactus_yolov7 import resize
 
 
 def extract_frames(
@@ -40,7 +41,7 @@ def extract_frames(
         if count % extract_frequency == 0:
             frame_name = str(count).zfill(n_frame_len)
             save_path = output_dir.absolute() / f"{frame_name}.jpg"
-            cv2.imwrite(str(save_path), frame)
+            cv2.imwrite(str(save_path), resize(frame))
 
         count += 1
 

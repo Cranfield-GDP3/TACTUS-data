@@ -24,9 +24,11 @@ install_requires = [
     "requests",
     "cython",
     "deep-sort-realtime",
+    "torch",
+    "tactus-yolov7 @ git+https://github.com/Cranfield-GDP3/yolov7.git",
     "matplotlib",
     "Pillow",
-    "numpy"
+    "numpy",
 ]
 tests_require = [
     "pytest",
