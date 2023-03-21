@@ -25,7 +25,7 @@ install_requires = [
     "cython",
     "deep-sort-realtime",
     "torch",
-    "TACTUS - yolov7",
+    "tactus-yolov7 @ git+https://github.com/Cranfield-GDP3/yolov7.git",
 ]
 tests_require = [
     "pytest",
