@@ -1,5 +1,4 @@
 from pathlib import Path
-from torchvision import transforms
 import cv2
 from torch.hub import download_url_to_file
 from tactus_yolov7 import Yolov7
