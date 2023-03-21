@@ -133,22 +133,9 @@ def _rotate_center(keypoints: list,
                    angle: float,
                    center_of_rotation: tuple
                    ):
-    """
-    Generate 1 json per number of copy asked + the original one. Each
-    copy is rotated more and more until it reaches the max_angle. You
-    can pick where you want the center of rotation of the skeleton to
-    be
-
-    Parameters
-    ----------
-    keypoints : list,
-                all the 17 keypoints coordinates x,y,confidence
-                (total of 51 values)
-    angle : float,
-            value of the rotation angle in radian
-    center_of_rotation : tuple, allow to compute the center or rotation
-    for the skeleton, use BK class as reference, will do the center
-    value among all the keypoint coordinates in the tuple
+    """Used by rotate_2d() :Decenter rotate and then center
+       keypoints based on center of rotation,
+       Returns the modified keypoints
     """
 
     # Compute skeleton center of rotation depending on
@@ -238,7 +225,9 @@ def rotation_2d(input_folder_path: Path,
 
 
 def _skel_width_height(keypoints: list):
-
+    """Used by noise_2d(): Returns the max width and height of
+       skeletons keypoints
+    """
     xmax = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
     xmin = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
     ymax = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
@@ -309,6 +298,10 @@ def _center_after_scaling(keypoints: list,
                           scale_keypoints: list,
                           resolution: list,
                           factor: float):
+    """
+    Used by camera_distance_2d(): Center the image after
+    zooming -in/out
+    """
     res_center = [x / 2 for x in resolution]
     d_center = [keypoints[BK["Nose"].value] - res_center[0],
                 keypoints[BK["Nose"].value + 1] - res_center[1]]
@@ -326,6 +319,10 @@ def _uniform_scale(keypoints: list,
                    distance_change: float,
                    focal_length: float,
                    resolution: list):
+    """Used by camerad_distance_2d(): Compute FOV and returns new
+       keypoints value based on the new FOV using sensor size and focal
+       length
+    """
     # 1/3" Type image sensor with 4:3 aspect ratio 4.8mm H * 3.6 mm V
     sensor1_3 = [4.8, 3.6]
     # Distance is arbitrarly 10 meters
