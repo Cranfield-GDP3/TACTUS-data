@@ -1,15 +1,11 @@
 from pathlib import Path
 import cv2
-from torch.hub import download_url_to_file
 from tactus_yolov7 import Yolov7
 
 MODEL_WEIGHTS_PATH = Path("data/raw/model/yolov7-w6-pose.pt")
 
 
-def yolov7(input_dir: Path):
-    _check_weights()
-    model = Yolov7(MODEL_WEIGHTS_PATH)
-
+def yolov7(input_dir: Path, model: Yolov7):
     formatted_json = {}
     formatted_json["frames"] = []
     for frame_path in Path(input_dir).glob("*.jpg"):
@@ -22,15 +18,3 @@ def yolov7(input_dir: Path):
         formatted_json["frames"].append(frame_json)
 
     return formatted_json
-
-def _download_weights():
-    """Download yolov7 pose weights"""
-
-    url = "https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt"
-    MODEL_WEIGHTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    download_url_to_file(url, MODEL_WEIGHTS_PATH.absolute())
-
-def _check_weights():
-    """check that the weights file exists"""
-    if not MODEL_WEIGHTS_PATH.exists():
-        _download_weights()

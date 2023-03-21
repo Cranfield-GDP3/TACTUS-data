@@ -30,7 +30,7 @@ def extract_frames(fps: int = 10):
     dataset.extract_frames(NAME, dataset.RAW_DIR, dataset.INTERIM_DIR, fps, "avi")
 
 
-def extract_skeletons(fps: int = 10):
+def extract_skeletons(fps: int = 10, device: str = None):
     """
     Extract skeletons from a folder containing video frames using
     yolov7.
@@ -39,8 +39,11 @@ def extract_skeletons(fps: int = 10):
     ----------
     fps : int
         the fps of the extracted frames
+    device : str
+        the computing device to use with yolov7.
+        Can be 'cpu', 'cuda:0' etc.
     """
-    dataset.extract_skeletons(NAME, dataset.INTERIM_DIR, dataset.PROCESSED_DIR, fps)
+    dataset.extract_skeletons(NAME, dataset.INTERIM_DIR, dataset.PROCESSED_DIR, fps, device)
 
 
 def download():

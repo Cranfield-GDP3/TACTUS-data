@@ -3,10 +3,12 @@ from enum import Enum
 import json
 import logging
 from tqdm import tqdm
+from tactus_yolov7 import Yolov7
 
 from tactus_data.utils import video_to_img
-from tactus_data.utils.yolov7 import yolov7
 from tactus_data.utils.retracker import deepsort
+from tactus_data.utils.yolov7 import yolov7
+from tactus_data.utils.yolov7 import MODEL_WEIGHTS_PATH
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -39,8 +41,9 @@ def extract_frames(
         The video extensions (avi, mp4, etc.)
     """
     input_dir = input_dir / dataset.name
+    nbr_of_videos = _count_files_in_dir(input_dir, f"*.{video_extension}")
 
-    for video_path in input_dir.rglob(f"*.{video_extension}"):
+    for video_path in tqdm(iterable=input_dir.rglob(f"*.{video_extension}"), total=nbr_of_videos):
         frame_output_dir = (output_dir
                             / dataset.name
                             / video_path.stem
@@ -52,7 +55,8 @@ def extract_skeletons(
         dataset: NAMES,
         input_dir: Path,
         output_dir: Path,
-        fps: int
+        fps: int,
+        device: str
     ):
     """
     Extract skeletons from a folder containing video frames using
@@ -71,15 +75,19 @@ def extract_skeletons(
         `output_dir/dataset_name/fps/name.json`
     fps : int
         the fps of the extracted frames
+    device : str
+        the computing device to use with yolov7.
+        Can be 'cpu', 'cuda:0' etc.
     """
     input_dir = input_dir / dataset.name
     fps_folder_name = _fps_folder_name(fps)
 
-    nbr_of_videos = 0
-    for _ in input_dir.glob(f"*/{fps_folder_name}"):
-        nbr_of_videos += 1
+    nbr_of_videos = _count_files_in_dir(input_dir, f"*/{fps_folder_name}")
 
     discarded_videos = []
+
+    model = Yolov7(MODEL_WEIGHTS_PATH, device)
+
     for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
         skeletons_output_dir: Path = (output_dir
@@ -88,7 +96,7 @@ def extract_skeletons(
                                       / fps_folder_name
                                       / "yolov7.json")
 
-        formatted_json = yolov7(extracted_frames_dir)
+        formatted_json = yolov7(extracted_frames_dir, model)
 
         try:
             tracked_json = deepsort(extracted_frames_dir, formatted_json)
@@ -119,3 +127,10 @@ def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: list[str]):
                 del skeleton[key]
 
     return formatted_json
+
+def _count_files_in_dir(directory: Path, pattern: str):
+    nbr_of_files = 0
+    for _ in directory.rglob(pattern):
+        nbr_of_files += 1
+
+    return nbr_of_files
