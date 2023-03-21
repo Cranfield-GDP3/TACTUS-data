@@ -5,7 +5,7 @@ import logging
 from tqdm import tqdm
 
 from tactus_data.utils import video_to_img
-from tactus_data.utils.alphapose import alphapose_skeletonisation
+from tactus_data.utils.yolov7 import yolov7
 from tactus_data.utils.retracker import deepsort
 
 RAW_DIR = Path("data/raw/")
@@ -56,7 +56,7 @@ def extract_skeletons(
     ):
     """
     Extract skeletons from a folder containing video frames using
-    alphapose.
+    yolov7.
 
     Parameters
     ----------
@@ -86,9 +86,9 @@ def extract_skeletons(
                                 / dataset.name
                                 / video_name
                                 / fps_folder_name
-                                / "alphapose_2d.json")
+                                / "yolov7.json")
 
-        formatted_json = alphapose_skeletonisation(extracted_frames_dir)
+        formatted_json = yolov7(extracted_frames_dir)
 
         try:
             tracked_json = deepsort(extracted_frames_dir, formatted_json)
