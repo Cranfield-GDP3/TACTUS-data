@@ -8,6 +8,7 @@ MODEL_WEIGHTS_PATH = Path("data/raw/model/yolov7-w6-pose.pt")
 
 
 def yolov7(input_dir: Path):
+    _check_weights()
     model = Yolov7(MODEL_WEIGHTS_PATH)
 
     formatted_json = {}
@@ -23,8 +24,13 @@ def yolov7(input_dir: Path):
 
     return formatted_json
 
-def download_weights():
+def _download_weights():
     """Download yolov7 pose weights"""
 
     url = "https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6-pose.pt"
     download_url_to_file(url, MODEL_WEIGHTS_PATH)
+
+def _check_weights():
+    """check that the weights file exists"""
+    if not MODEL_WEIGHTS_PATH.exists():
+        _download_weights()
