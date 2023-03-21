@@ -82,11 +82,11 @@ def extract_skeletons(
     discarded_videos = []
     for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
         video_name = extracted_frames_dir.parent.name
-        skeletons_output_dir = (output_dir
-                                / dataset.name
-                                / video_name
-                                / fps_folder_name
-                                / "yolov7.json")
+        skeletons_output_dir: Path = (output_dir
+                                      / dataset.name
+                                      / video_name
+                                      / fps_folder_name
+                                      / "yolov7.json")
 
         formatted_json = yolov7(extracted_frames_dir)
 
@@ -97,6 +97,7 @@ def extract_skeletons(
         else:
             filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
 
+            skeletons_output_dir.parent.mkdir(parents=True, exist_ok=True)
             with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
                 json.dump(filtered_json, fp)
 
