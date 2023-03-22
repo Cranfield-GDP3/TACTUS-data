@@ -6,7 +6,7 @@ from tactus_yolov7 import resize
 def extract_frames(
         video_path: Path,
         output_dir: Path,
-        fps: int = None):
+        target_fps: int = None):
     """
     Extract frames from a video source at a specific frame rate.
     Extracted frames will be name with leading 0 (e.g. '0004.jpg').
@@ -17,18 +17,18 @@ def extract_frames(
         The video path that gives the video source
     output_dir : Path
         The location where the frame images are saved
-    fps : int, optional
+    target_fps : int, optional
         The fps we want to have. Extract every frame if None, by default None
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
     cap = cv2.VideoCapture(str(video_path))
-    fps = cap.get(cv2.CAP_PROP_FPS)
+    video_fps = cap.get(cv2.CAP_PROP_FPS)
 
-    if fps is None:
+    if video_fps is None:
         extract_frequency = 1
     else:
-        extract_frequency = int(fps / fps)
+        extract_frequency = int(video_fps / target_fps)
 
     n_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     n_frame_len = len(str(n_frame))
