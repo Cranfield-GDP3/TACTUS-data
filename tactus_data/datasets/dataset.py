@@ -43,7 +43,8 @@ def extract_frames(
     input_dir = input_dir / dataset.name
     nbr_of_videos = _count_files_in_dir(input_dir, f"*.{video_extension}")
 
-    for video_path in tqdm(iterable=input_dir.rglob(f"*.{video_extension}"), total=nbr_of_videos):
+    progress_bar = tqdm(iterable=input_dir.rglob(f"*.{video_extension}"), total=nbr_of_videos)
+    for video_path in progress_bar:
         frame_output_dir = (output_dir
                             / dataset.name
                             / video_path.stem
@@ -86,13 +87,11 @@ def extract_skeletons(
 
     model = Yolov7(MODEL_WEIGHTS_PATH, device)
 
-    for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
+    progress_bar = tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos)
+    for extracted_frames_dir in progress_bar:
         video_name = extracted_frames_dir.parent.name
-        skeletons_output_dir: Path = (output_dir
-                                      / dataset.name
-                                      / video_name
-                                      / fps_folder_name
-                                      / "yolov7.json")
+        skeletons_output_dir: Path = (output_dir / dataset.name / video_name
+                                      / fps_folder_name / "yolov7.json")
 
         formatted_json = yolov7(extracted_frames_dir, model)
         tracked_json = stupid_reid(formatted_json)
