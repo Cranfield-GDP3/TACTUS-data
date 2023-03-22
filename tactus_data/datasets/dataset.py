@@ -6,7 +6,7 @@ from tqdm import tqdm
 from tactus_yolov7 import Yolov7
 
 from tactus_data.utils import video_to_img
-from tactus_data.utils.retracker import deepsort
+from tactus_data.utils.retracker import stupid_reid
 from tactus_data.utils.yolov7 import yolov7
 from tactus_data.utils.yolov7 import MODEL_WEIGHTS_PATH
 
@@ -99,7 +99,7 @@ def extract_skeletons(
         formatted_json = yolov7(extracted_frames_dir, model)
 
         try:
-            tracked_json = deepsort(extracted_frames_dir, formatted_json)
+            tracked_json = stupid_reid(extracted_frames_dir, formatted_json)
         except IndexError:
             discarded_videos.append(video_name)
         else:
