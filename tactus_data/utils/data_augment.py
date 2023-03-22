@@ -7,7 +7,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
-from tqdm import tqdm
 
 
 class BK(Enum):
@@ -28,6 +27,23 @@ class BK(Enum):
     RKnee = 14
     LAnkle = 15
     RAnkle = 16
+
+    list_link = [(RAnkle, RKnee),
+                 (LAnkle, LKnee),
+                 (RKnee, RHip),
+                 (LKnee, LHip),
+                 (RHip, LHip),
+                 (RHip, RShoulder),
+                 (LHip, LShoulder),
+                 (RShoulder, LShoulder),
+                 (RShoulder, RElbow),
+                 (RElbow, RWrist),
+                 (LShoulder, LElbow),
+                 (LElbow, LWrist),
+                 (Nose, LEye),
+                 (Nose, REye),
+                 (LEye, LEar),
+                 (REye, REar)]
 
 
 def plot_skeleton_2d(path_json: Path,
@@ -66,27 +82,10 @@ def plot_skeleton_2d(path_json: Path,
             keypoints_x.append(keypoints[i])
             keypoints_y.append(keypoints[i + 1])
             confidence.append(keypoints[i + 2])
-
-        list_link = [(BK.RAnkle, BK.RKnee),
-                     (BK.LAnkle, BK.LKnee),
-                     (BK.RKnee, BK.RHip),
-                     (BK.LKnee, BK.LHip),
-                     (BK.RHip, BK.LHip),
-                     (BK.RHip, BK.RShoulder),
-                     (BK.LHip, BK.LShoulder),
-                     (BK.RShoulder, BK.LShoulder),
-                     (BK.RShoulder, BK.RElbow),
-                     (BK.RElbow, BK.RWrist),
-                     (BK.LShoulder, BK.LElbow),
-                     (BK.LElbow, BK.LWrist),
-                     (BK.Nose, BK.LEye),
-                     (BK.Nose, BK.REye),
-                     (BK.LEye, BK.LEar),
-                     (BK.REye, BK.REar)]
         ax.scatter(keypoints_x, keypoints_y)
-        for i in list_link:
-            ax.plot([keypoints_x[i[0].value], keypoints_x[i[1].value]],
-                    [keypoints_y[i[0].value], keypoints_y[i[1].value]])
+        for i in BK.list_link.value:
+            ax.plot([keypoints_x[i[0]], keypoints_x[i[1]]],
+                    [keypoints_y[i[0]], keypoints_y[i[1]]])
     if show_frame:
         img = np.asarray(Image.open(path_frame))
         plt.imshow(img)
