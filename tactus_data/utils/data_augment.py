@@ -112,7 +112,7 @@ def flip_h_2d(input_folder_path: Path,
                   saved
     """
     for file_name in json_name:
-        with open(str(input_folder_path) + "\\" + file_name) as file:
+        with open(str(input_folder_path / file_name)) as file:
             data = json.load(file)
             resolution = data['resolution']
             num_frame = len(data['frames'])
@@ -123,7 +123,7 @@ def flip_h_2d(input_folder_path: Path,
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
                         resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
 
-        with open(str(output_folder_path) + "\\" + str(file_name), 'w') as outfile:
+        with open(str(output_folder_path / file_name), 'w') as outfile:
             json.dump(flip_data, outfile)
     return json_name
 
@@ -205,7 +205,7 @@ def rotation_2d(input_folder_path: Path,
     list_angle = np.linspace(0, rad_angle, num_copy + 1)
     new_json_name = []
     for file_name in json_name:
-        with open(str(input_folder_path) + "\\" + file_name) as file:
+        with open(str(input_folder_path / file_name)) as file:
             data = json.load(file)
             num_frame = len(data['frames'])
         new_json_name.append(file_name)
@@ -217,7 +217,7 @@ def rotation_2d(input_folder_path: Path,
                         _rotate_center(keypoints=rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'],
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
             new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
-            with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
+            with open(str(output_folder_path / new_json_name[len(new_json_name)-1]),
                       'w') as outfile:
                 json.dump(rotated_data, outfile)
     return new_json_name
@@ -266,7 +266,7 @@ def noise_2d(input_folder_path: Path,
     """
     new_json_name = []
     for file_name in json_name:
-        with open(str(input_folder_path) + "\\" + file_name) as file:
+        with open(str(input_folder_path / file_name)) as file:
             data = json.load(file)
             num_frame = len(data['frames'])
         new_json_name.append(file_name)
@@ -287,7 +287,7 @@ def noise_2d(input_folder_path: Path,
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
                             noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
             new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
-            with open(str(output_folder_path) + "\\" + new_json_name[len(new_json_name)-1],
+            with open(str(output_folder_path / new_json_name[len(new_json_name)-1]),
                       'w') as outfile:
                 json.dump(noisy_data, outfile)
     return new_json_name
@@ -384,7 +384,7 @@ def camera_distance_2d(input_folder_path: Path,
         """
     new_json_name = []
     for file_name in json_name:
-        with open(str(input_folder_path) + "\\" + file_name) as file:
+        with open(str(input_folder_path / file_name)) as file:
             data = json.load(file)
             resolution = data["resolution"]
             num_frame = len(data['frames'])
@@ -395,7 +395,7 @@ def camera_distance_2d(input_folder_path: Path,
                     _uniform_scale(scaled_data['frames'][frame]['skeletons'][skeleton]["keypoints"],
                                    distance, focal_length, resolution))
         new_json_name.append(file_name)
-        with open(str(output_folder_path) + "\\" + str(file_name),
+        with open(str(output_folder_path / file_name),
                   'w') as outfile:
             json.dump(scaled_data, outfile)
     return new_json_name
@@ -462,7 +462,7 @@ def grid_augment(path_json: Path,
         else:
             # create copy json with final name
             new_name = path_json.stem + "_augment_" + str(counter) + ".json"
-            with open(str(parent_folder) + "\\" + str(new_name),
+            with open(str(parent_folder / new_name),
                       'w') as outfile:
                 json.dump(original_data, outfile)
             # No parameter on flip so True / false
