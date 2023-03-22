@@ -80,5 +80,28 @@ def deepsort_track_frame(
     return track_ids
 
 
+def stupid_reid(skeletons_json: dict) -> dict:
+    for frame in skeletons_json["frames"]:
+        skeletons = frame["skeletons"]
+
+        if len(skeletons) > 2:
+            raise IndexError("There are more than 2 skeletons")
+
+        xmin_bounding_boxes = [skeleton["box"][0]
+                               for skeleton
+                               in skeletons]
+
+        if len(skeletons)==1:
+            skeletons[0]["id_stupid"] = 1
+        elif xmin_bounding_boxes[0] - xmin_bounding_boxes[1] > 0:
+            skeletons[0]["id_stupid"] = 2
+            skeletons[1]["id_stupid"] = 1
+        else:
+            skeletons[0]["id_stupid"] = 1
+            skeletons[1]["id_stupid"] = 2
+
+    return skeletons_json
+
+
 def load_image(image_path: Path) -> np.ndarray:
     return np.asarray(Image.open(image_path))
