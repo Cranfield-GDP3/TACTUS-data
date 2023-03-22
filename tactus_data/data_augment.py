@@ -438,6 +438,7 @@ def grid_augment(path_json: Path,
                generated
     """
     parent_folder = path_json.parent
+    video_name = parent_folder.parts[len(parent_folder.parts)-2]
     list_flip_h = grid[0]
     list_camera_distance_2d = grid[1]
     list_rotation_2d = grid[2]
@@ -476,10 +477,10 @@ def grid_augment(path_json: Path,
             generated_pic += len(result_noise)
             counter += 1
     if max_copy == -1:
-        print("Generated :", generated_pic, " augmented copy of ", parent_folder.parts[len(parent_folder.parts)-2])
+        print("Generated :", generated_pic, " augmented copy of ", video_name)
     else:
         print("Generation Maxed out ! Only generated ", generated_pic, " augmented copy of ",
-              parent_folder.parts[len(parent_folder.parts)-2])
+              video_name)
     return generated_pic
 
 
@@ -530,7 +531,8 @@ def augment_all_vid(input_folder_path: Path,
     total_cpy = 0
     t1 = time.time()
     list_dir = list(input_folder_path.iterdir())
-    for index in range(len(list_dir)-2):
+    list_dir.remove(input_folder_path / "readme.md")
+    for index in range(len(list_dir)-1):
         vid_path = Path(str(list_dir[index]) + "\\" + str(fps) + "fps")
         vid_name = vid_path.glob('**/*.json')
         for injson in vid_name:
