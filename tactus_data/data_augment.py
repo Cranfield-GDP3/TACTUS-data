@@ -1,6 +1,5 @@
 import json
 import random
-import time
 from itertools import product
 from enum import Enum
 from pathlib import Path
@@ -8,6 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
+from tqdm import tqdm
 
 
 class BK(Enum):
@@ -434,7 +434,7 @@ def grid_augment(path_json: Path,
             - distance = [-5,-2, 2, 5, 10, 15]
             - focal_length = [2.8, 3.6, 4.0, 6.0]
     max_copy : int,
-               Number of copy of the original file are going to be
+               Maximum copy of an original file that can be
                generated
     """
     parent_folder = path_json.parent
@@ -458,6 +458,7 @@ def grid_augment(path_json: Path,
         original_data = json.load(file)
     for indices in generator:
         if flag_limit and generated_pic >= max_copy:
+            print("Max copy overflow")
             break
         else:
             # create copy json with final name
@@ -476,11 +477,6 @@ def grid_augment(path_json: Path,
             result_noise = noise_2d(parent_folder, result_rota, parent_folder, indices[3][0], indices[3][1])
             generated_pic += len(result_noise)
             counter += 1
-    if max_copy == -1:
-        print("Generated :", generated_pic, " augmented copy of ", video_name)
-    else:
-        print("Generation Maxed out ! Only generated ", generated_pic, " augmented copy of ",
-              video_name)
     return generated_pic
 
 
@@ -520,6 +516,9 @@ def augment_all_vid(input_folder_path: Path,
            list_camera_distance_2d :
             - distance = [-5,-2, 2, 5, 10, 15]
             - focal_length = [2.8, 3.6, 4.0, 6.0]
+            Grid for testing : [[True, False], [[0, 5], [3.6]],
+                               [[-10, 0, 10],[1], [(BK.LAnkle,
+                               BK.RAnkle)]], [[1], [0, 4]]]
     fps : int,
           pick the fps folder you want to augment for each video
           (the fps folder must exist)
@@ -532,14 +531,10 @@ def augment_all_vid(input_folder_path: Path,
     """
     random.seed(random_seed)
     total_cpy = 0
-    t1 = time.time()
     list_dir = list(input_folder_path.iterdir())
     list_dir.remove(input_folder_path / "readme.md")
-    for path_dir in list_dir:
+    for path_dir in tqdm(list_dir):
         vid_path = Path(path_dir / (str(fps) + "fps"))
         vid_name = vid_path.glob('**/' + json_name)
         for injson in vid_name:
             total_cpy += grid_augment(injson, grid, max_copy)
-    t2 = time.time()
-    time_total = (t2 - t1) / 60
-    print("Increased data from ", input_folder_path.name, " to ", total_cpy, "in ", round(time_total, 2), " minutes")
