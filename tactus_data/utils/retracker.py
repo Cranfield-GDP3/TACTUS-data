@@ -89,7 +89,7 @@ def stupid_reid(skeletons_json: dict) -> dict:
                            in skeletons]
 
         index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
-        index_max = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
+        index_max = max(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
 
         if len(skeletons)==1:
             skeletons[0]["id_stupid"] = 1
