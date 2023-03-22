@@ -84,8 +84,6 @@ def extract_skeletons(
 
     nbr_of_videos = _count_files_in_dir(input_dir, f"*/{fps_folder_name}")
 
-    discarded_videos = []
-
     model = Yolov7(MODEL_WEIGHTS_PATH, device)
 
     for extracted_frames_dir in tqdm(iterable=input_dir.glob(f"*/{fps_folder_name}"), total=nbr_of_videos):
@@ -97,21 +95,12 @@ def extract_skeletons(
                                       / "yolov7.json")
 
         formatted_json = yolov7(extracted_frames_dir, model)
+        tracked_json = stupid_reid(formatted_json)
+        filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
 
-        try:
-            tracked_json = stupid_reid(extracted_frames_dir, formatted_json)
-        except IndexError:
-            discarded_videos.append(video_name)
-        else:
-            filtered_json = _delete_skeletons_keys(tracked_json, ["box", "score"])
-
-            skeletons_output_dir.parent.mkdir(parents=True, exist_ok=True)
-            with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
-                json.dump(filtered_json, fp)
-
-    if len(discarded_videos) > 0:
-        logging.warning("Discarding %s videos from %s:", len(discarded_videos), dataset.name)
-        logging.warning("\t %s", "\t".join(discarded_videos))
+        skeletons_output_dir.parent.mkdir(parents=True, exist_ok=True)
+        with skeletons_output_dir.open(encoding="utf-8", mode="w") as fp:
+            json.dump(filtered_json, fp)
 
 
 def _fps_folder_name(fps: int):

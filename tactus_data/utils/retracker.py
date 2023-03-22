@@ -84,21 +84,18 @@ def stupid_reid(skeletons_json: dict) -> dict:
     for frame in skeletons_json["frames"]:
         skeletons = frame["skeletons"]
 
-        if len(skeletons) > 2:
-            raise IndexError("There are more than 2 skeletons")
+        x_pos_skeletons = [skeleton["keypoints"][0] # Nose keypoint
+                           for skeleton
+                           in skeletons]
 
-        xmin_bounding_boxes = [skeleton["box"][0]
-                               for skeleton
-                               in skeletons]
+        index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
+        index_max = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
 
         if len(skeletons)==1:
             skeletons[0]["id_stupid"] = 1
-        elif xmin_bounding_boxes[0] - xmin_bounding_boxes[1] > 0:
-            skeletons[0]["id_stupid"] = 2
-            skeletons[1]["id_stupid"] = 1
         else:
-            skeletons[0]["id_stupid"] = 1
-            skeletons[1]["id_stupid"] = 2
+            skeletons[index_min]["id_stupid"] = 1
+            skeletons[index_max]["id_stupid"] = 2
 
     return skeletons_json
 
