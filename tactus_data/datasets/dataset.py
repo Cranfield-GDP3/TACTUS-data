@@ -1,7 +1,6 @@
 from pathlib import Path
 from enum import Enum
 import json
-import logging
 from tqdm import tqdm
 from tactus_yolov7 import Yolov7
 
