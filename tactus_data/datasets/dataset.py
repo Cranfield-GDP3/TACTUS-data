@@ -6,8 +6,8 @@ from tactus_yolov7 import Yolov7
 
 from tactus_data.utils import video_to_img
 from tactus_data.utils.retracker import stupid_reid
-from tactus_data.utils.yolov7 import yolov7
-from tactus_data.utils.yolov7 import MODEL_WEIGHTS_PATH
+from tactus_data.utils.skeletonization import yolov7
+from tactus_data.utils.skeletonization import MODEL_WEIGHTS_PATH
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
