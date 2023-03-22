@@ -487,6 +487,7 @@ def grid_augment(path_json: Path,
 def augment_all_vid(input_folder_path: Path,
                     grid: list[list[list]],
                     fps: int,
+                    json_name: str = "alphapose_2d.json",
                     max_copy: int = -1,
                     random_seed: int = 30000):
     """
@@ -522,6 +523,8 @@ def augment_all_vid(input_folder_path: Path,
     fps : int,
           pick the fps folder you want to augment for each video
           (the fps folder must exist)
+    json_name : str,
+                name of the json file in each video folder.
     max_copy : int,
                Number of copy of the original file are going to be
                generated
@@ -532,11 +535,11 @@ def augment_all_vid(input_folder_path: Path,
     t1 = time.time()
     list_dir = list(input_folder_path.iterdir())
     list_dir.remove(input_folder_path / "readme.md")
-    for index in range(len(list_dir)-1):
-        vid_path = Path(str(list_dir[index]) + "\\" + str(fps) + "fps")
-        vid_name = vid_path.glob('**/*.json')
+    for path_dir in list_dir:
+        vid_path = Path(path_dir / (str(fps) + "fps"))
+        vid_name = vid_path.glob('**/' + json_name)
         for injson in vid_name:
             total_cpy += grid_augment(injson, grid, max_copy)
     t2 = time.time()
     time_total = (t2 - t1) / 60
-    print("Increased data from ", len(list_dir)-1, " to ", total_cpy, "in ", round(time_total, 2), " minutes")
+    print("Increased data from ", input_folder_path.name, " to ", total_cpy, "in ", round(time_total, 2), " minutes")
