@@ -47,6 +47,21 @@ class BK(Enum):
                  (REye, REar)]
 
 
+class gridParam:
+    """"""
+    def __init__(self, noise, translation, rotation, scaling):
+        self.noise = noise
+        self.translation = translation
+        self.rotation = rotation
+        self.scaling = scaling
+
+    def init_test(self):
+        self.noise = [[1], [0, 4]]
+        self.translation = [[0], [0], [0, -5, 10]]
+        self.rotation = [[0, 30, -30, 60, -60,180], [0,30,60],[0,10,-10]]
+        self.scaling =[[0,1.2,0.8]]
+
+
 def plot_skeleton_2d(path_json: Path,
                      path_frame: Path,
                      frame_number: int = 0,
