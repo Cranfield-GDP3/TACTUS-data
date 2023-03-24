@@ -49,17 +49,19 @@ class BK(Enum):
 
 class gridParam:
     """"""
-    def __init__(self, noise, translation, rotation, scaling):
+
+    def __init__(self, noise=0, translation=0, rotation=0, scaling=0):
         self.noise = noise
         self.translation = translation
         self.rotation = rotation
         self.scaling = scaling
 
     def init_test(self):
-        self.noise = [[1], [0, 4]]
+        self.noise = [[1], [4]]
         self.translation = [[0], [0], [0, -5, 10]]
-        self.rotation = [[0, 30, -30, 60, -60,180], [0,30,60],[0,10,-10]]
-        self.scaling =[[0,1.2,0.8]]
+        self.rotation = [[0, 60, -60, 180], [0], [0, 10, -10]]
+        self.scaling = [[1,1,1],[1.2,1.2,1.2],[0.8,0.8,0.8]]
+        return self
 
 
 def plot_skeleton_2d(path_json: Path,
@@ -295,12 +297,12 @@ def noise_2d(input_folder_path: Path,
                     noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
                     for point in range(0, 5 * 3, 3):  # uniform noise for the face
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facey
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point+1] += noise_for_facey
                     for point in range(5 * 3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
                                 noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point+1] += (
                                 noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
             new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
             with open(str(output_folder_path / new_json_name[len(new_json_name) - 1]),
@@ -493,9 +495,9 @@ def _cart_augment(M,
         keypoints.append([original_keypoints[i], original_keypoints[i + 1]])
     keypoints = np.array([keypoints], dtype="float")
     keypoints = cv2.perspectiveTransform(keypoints, M)
-    for i in range(0, len(keypoints) - 1, 2):
-        original_keypoints[3 * i] = keypoints[i]
-        original_keypoints[3 * i + 1] = keypoints[i + 1]
+    for i in range(0, len(keypoints[0])):
+        original_keypoints[3 * i] = keypoints[0][i][0].tolist()
+        original_keypoints[3 * i + 1] = keypoints[0][i][1].tolist()
     return original_keypoints
 
 
@@ -526,7 +528,7 @@ def multiaugment(input_folder_path: Path,
 
 
 def grid_augment(path_json: Path,
-                 grid: list[list[list]],
+                 grid: gridParam,
                  max_copy: int = -1):
     """
     Generate 1 json with new skeleton sizes, it is possible to change
@@ -562,15 +564,12 @@ def grid_augment(path_json: Path,
     """
     parent_folder = path_json.parent
     video_name = parent_folder.parts[len(parent_folder.parts) - 2]
-    list_flip_h = grid[0]
-    list_camera_distance_2d = grid[1]
-    list_rotation_2d = grid[2]
-    list_noise_2d = grid[3]
-    choice_flip = list(product(list_flip_h))
-    choice_rot = list(product(list_rotation_2d[0], list_rotation_2d[1], list_rotation_2d[2]))
-    choice_cam = list(product(list_camera_distance_2d[0], list_camera_distance_2d[1]))
-    choice_noise = list(product(list_noise_2d[0], list_noise_2d[1]))
-    generator = (product(choice_flip, choice_cam, choice_rot, choice_noise))
+    choice_rotation = list(product(grid.rotation[0], grid.rotation[1], grid.rotation[2]))
+    choice_translation = list(product(grid.translation[0], grid.translation[1], grid.translation[2]))
+    choice_scaling = grid.scaling
+    choice_noise = list(product(grid.noise[0], grid.noise[1]))
+    generator = product(choice_translation, choice_rotation, choice_scaling, choice_noise)
+
     generated_pic = 0
     counter = 1
     if max_copy == -1:
@@ -590,14 +589,8 @@ def grid_augment(path_json: Path,
                       'w') as outfile:
                 json.dump(original_data, outfile)
             # No parameter on flip so True / false
-            if indices[0] == (True,):
-                result_flip = flip_h_2d(parent_folder, [new_name], parent_folder)
-            else:
-                result_flip = [new_name]
-            result_cam = camera_distance_2d(parent_folder, result_flip, parent_folder, indices[1][0], indices[1][1])
-            result_rota = rotation_2d(parent_folder, result_cam, parent_folder, indices[2][0],
-                                      indices[2][1], indices[2][2])
-            result_noise = noise_2d(parent_folder, result_rota, parent_folder, indices[3][0], indices[3][1])
+            result_multiaugment = multiaugment(parent_folder,[new_name],parent_folder,indices[0],indices[1],indices[2])
+            result_noise = noise_2d(parent_folder, result_multiaugment, parent_folder, indices[3][0], indices[3][1])
             generated_pic += len(result_noise)
             counter += 1
     return generated_pic
