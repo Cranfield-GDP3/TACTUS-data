@@ -186,3 +186,4 @@ def augment_all_vid(input_folder_path: Path,
         vid_name = vid_path.glob('**/' + json_name)
         for injson in vid_name:
             total_cpy += grid_augment(injson, grid, max_copy)
+    print("Generated ",total_cpy, "copies")

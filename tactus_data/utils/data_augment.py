@@ -7,6 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
+import cv2
 
 
 class BK(Enum):
@@ -69,7 +70,7 @@ def plot_skeleton_2d(path_json: Path,
     with open(path_json) as file:
         data = json.load(file)
     fig, ax = plt.subplots()
-    max_frame = len(data['frames'])-1
+    max_frame = len(data['frames']) - 1
 
     if frame_number > max_frame:
         frame_number = max_frame
@@ -121,7 +122,7 @@ def flip_h_2d(input_folder_path: Path,
             for skeleton in range(len(flip_data['frames'][frame]['skeletons'])):
                 for point in range(0, len(flip_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                     flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] = (
-                        resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
+                            resolution[0] - flip_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point])
 
         with open(str(output_folder_path / file_name), 'w') as outfile:
             json.dump(flip_data, outfile)
@@ -217,7 +218,7 @@ def rotation_2d(input_folder_path: Path,
                         _rotate_center(keypoints=rotated_data['frames'][frame]['skeletons'][skeleton]['keypoints'],
                                        angle=list_angle[angl], center_of_rotation=rotate_center))
             new_json_name.append(file_name.strip(".json") + "_R" + str(angl) + ".json")
-            with open(str(output_folder_path / new_json_name[len(new_json_name)-1]),
+            with open(str(output_folder_path / new_json_name[len(new_json_name) - 1]),
                       'w') as outfile:
                 json.dump(rotated_data, outfile)
     return new_json_name
@@ -277,17 +278,17 @@ def noise_2d(input_folder_path: Path,
                     xscale, yscale = _skel_width_height(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"])
                     noise_for_facex = noise_magnitude * random.random() * xscale * random.choice([-1, 1])
                     noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
-                    for point in range(0, 5*3, 3):  # uniform noise for the face
+                    for point in range(0, 5 * 3, 3):  # uniform noise for the face
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facey
-                    for point in range(5*3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
+                    for point in range(5 * 3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
-                            noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
+                                noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
-                            noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
+                                noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
             new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
-            with open(str(output_folder_path / new_json_name[len(new_json_name)-1]),
+            with open(str(output_folder_path / new_json_name[len(new_json_name) - 1]),
                       'w') as outfile:
                 json.dump(noisy_data, outfile)
     return new_json_name
@@ -305,7 +306,7 @@ def _center_after_scaling(keypoints: list,
     d_center = [keypoints[BK["Nose"].value] - res_center[0],
                 keypoints[BK["Nose"].value + 1] - res_center[1]]
     new_d_center = [x * factor for x in d_center]
-    desired = [res_center[0]+new_d_center[0], res_center[1]+new_d_center[1]]
+    desired = [res_center[0] + new_d_center[0], res_center[1] + new_d_center[1]]
     diff = [scale_keypoints[BK["Nose"].value] - desired[0],
             scale_keypoints[BK["Nose"].value + 1] - desired[1]]
     for i in range(0, len(keypoints) - 1, 3):
@@ -327,16 +328,16 @@ def _uniform_scale(keypoints: list,
     # Distance is arbitrarly 10 meters
     # Scale
     distance = 10
-    diagonal = np.sqrt(sensor1_3[0]*sensor1_3[0] + sensor1_3[1]*sensor1_3[1])
+    diagonal = np.sqrt(sensor1_3[0] * sensor1_3[0] + sensor1_3[1] * sensor1_3[1])
     fov = 2 * np.arctan(diagonal / (2 * focal_length))
-    new_focal_length = focal_length * (distance+distance_change)/distance
+    new_focal_length = focal_length * (distance + distance_change) / distance
     new_fov = 2 * np.arctan(diagonal / (2 * new_focal_length))
     factor = new_fov / fov
     scale_keypoints = []
-    for i in range(0, len(keypoints)-1, 3):
-        scale_keypoints.append(keypoints[i]*factor)
-        scale_keypoints.append(keypoints[i+1] * factor)
-        scale_keypoints.append(keypoints[i+2])
+    for i in range(0, len(keypoints) - 1, 3):
+        scale_keypoints.append(keypoints[i] * factor)
+        scale_keypoints.append(keypoints[i + 1] * factor)
+        scale_keypoints.append(keypoints[i + 2])
     scale_keypoints = _center_after_scaling(keypoints, scale_keypoints, resolution, factor)
     return scale_keypoints
 
@@ -401,6 +402,114 @@ def camera_distance_2d(input_folder_path: Path,
     return new_json_name
 
 
+def _get_transform_matrix(resolution: list[int, int],
+                          translation: list,
+                          rotation: list,
+                          scaling: list):
+    """"""
+    # split input
+    t_x, t_y, t_z = translation
+    r_x, r_y, r_z = rotation
+    s_x, s_y, s_z = scaling
+    # degrees to rad
+    theta_rx = np.deg2rad(r_x)
+    theta_ry = np.deg2rad(r_y)
+    theta_rz = np.deg2rad(r_z)
+    # sin and cos
+    sin_rx, cos_rx = np.sin(theta_rx), np.cos(theta_rx)
+    sin_ry, cos_ry = np.sin(theta_ry), np.cos(theta_ry)
+    sin_rz, cos_rz = np.sin(theta_rz), np.cos(theta_rz)
+
+    height, width = resolution
+    diag = (height ** 2 + width ** 2) ** 0.5
+    # focal length
+    focal = diag
+    if np.sin(theta_rz) != 0:
+        focal /= 2 * np.sin(theta_rz)
+    # Adjust translation on z
+    t_z = (focal - t_z) / s_z ** 2
+    # All matrices
+    # from 3D to Cartesian dimension
+    M_tocart = np.array([[1, 0, -width / 2],
+                         [0, 1, -height / 2],
+                         [0, 0, 1],
+                         [0, 0, 1]])
+    # from Cartesian to 3D dimension
+    M_fromcart = np.array([[focal, 0, width / 2, 0],
+                           [0, focal, height / 2, 0],
+                           [0, 0, 1, 0]])
+    # translation matrix
+    T_M = np.array([[1, 0, 0, t_x],
+                    [0, 1, 0, t_y],
+                    [0, 0, 1, t_z],
+                    [0, 0, 0, 1]])
+
+    # Rotation on all axes
+    R_Mx = np.array([[1, 0, 0, 0],
+                     [0, cos_rx, -sin_rx, 0],
+                     [0, sin_rx, cos_rx, 0],
+                     [0, 0, 0, 1]])
+    # get the rotation matrix on y axis
+    R_My = np.array([[cos_ry, 0, -sin_ry, 0],
+                     [0, 1, 0, 0],
+                     [sin_ry, 0, cos_ry, 0],
+                     [0, 0, 0, 1]])
+    # get the rotation matrix on z axis
+    R_Mz = np.array([[cos_rz, -sin_rz, 0, 0],
+                     [sin_rz, cos_rz, 0, 0],
+                     [0, 0, 1, 0],
+                     [0, 0, 0, 1]])
+    # final_rotation
+    R_M = np.dot(np.dot(R_Mx, R_My), R_Mz)
+    # Scaling matrix
+    S_M = np.array([[s_x, 0, 0, 0],
+                    [0, s_y, 0, 0],
+                    [0, 0, s_z, 0],
+                    [0, 0, 0, 1]])
+    M_cart = T_M.dot(R_M).dot(S_M)
+    M_final = M_fromcart.dot(M_cart).dot(M_tocart)
+    return M_final
+
+
+def _cart_augment(M,
+                  original_keypoints: list):
+    keypoints = []
+    for i in range(0, len(original_keypoints) - 1, 3):
+        keypoints.append([original_keypoints[i], original_keypoints[i + 1]])
+    keypoints = np.array([keypoints], dtype="float")
+    keypoints = cv2.perspectiveTransform(keypoints, M)
+    for i in range(0, len(keypoints) - 1, 2):
+        original_keypoints[3 * i] = keypoints[i]
+        original_keypoints[3 * i + 1] = keypoints[i + 1]
+    return original_keypoints
+
+
+def multiaugment(input_folder_path: Path,
+                 json_name: list[str],
+                 output_folder_path: Path,
+                 translation: list,
+                 rotation: list,
+                 scaling: list):
+    """"""
+    new_json_name = []
+    for file_name in json_name:
+        with open(str(input_folder_path / file_name)) as file:
+            data = json.load(file)
+            resolution = data["resolution"]
+            num_frame = len(data['frames'])
+        new_data = data
+        for frame in range(0, num_frame):
+            for skeleton in range(len(new_data['frames'][frame]['skeletons'])):
+                new_data['frames'][frame]['skeletons'][skeleton]["keypoints"] = (
+                    _cart_augment(_get_transform_matrix(resolution, translation, rotation, scaling),
+                                  new_data['frames'][frame]['skeletons'][skeleton]["keypoints"]))
+        new_json_name.append(file_name)
+        with open(str(output_folder_path / file_name),
+                  'w') as outfile:
+            json.dump(new_data, outfile)
+    return new_json_name
+
+
 def grid_augment(path_json: Path,
                  grid: list[list[list]],
                  max_copy: int = -1):
@@ -437,7 +546,7 @@ def grid_augment(path_json: Path,
                generated
     """
     parent_folder = path_json.parent
-    video_name = parent_folder.parts[len(parent_folder.parts)-2]
+    video_name = parent_folder.parts[len(parent_folder.parts) - 2]
     list_flip_h = grid[0]
     list_camera_distance_2d = grid[1]
     list_rotation_2d = grid[2]
