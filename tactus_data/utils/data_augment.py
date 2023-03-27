@@ -54,18 +54,13 @@ class gridParam:
     exception for scaling where you just put all the possibilities you want to do
     """
 
-    def __init__(self, noise=0, translation=0, rotation=0, scaling=0):
+    def __init__(self, noise=([1], [4]), translation=([0], [0], [0]),
+                 rotation=([0, 20, -20], [0, 180, 30, -30], [0, 10, -10]),
+                 scaling=([1, 1, 1], [1.1, 1, 1], [0.9, 1, 1], [1, 1.1, 1], [1, 0.9, 1])):
         self.noise = noise
         self.translation = translation
         self.rotation = rotation
         self.scaling = scaling
-
-    def init_test(self):
-        self.noise = [[1], [4]]
-        self.translation = [[0], [0], [0]]
-        self.rotation = [[0, 20, -20], [0, 180, 30, -30], [0, 10, -10]]
-        self.scaling = [[1, 1, 1], [1.1, 1, 1], [0.9, 1, 1], [1, 1.1, 1], [1, 0.9, 1]]
-        return self
 
 
 def plot_skeleton_2d(path_json: Path,
@@ -360,7 +355,6 @@ def grid_augment(path_json: Path,
             result_multiaugment = multiaugment(parent_folder, [new_name], parent_folder, indices[0], indices[1],
                                                indices[2])
             result_noise = noise_2d(parent_folder, result_multiaugment, parent_folder, indices[3][0], indices[3][1])
-            print("For : ", new_name, "parameters : ", indices)
             generated_pic += len(result_noise)
             counter += 1
     return generated_pic
