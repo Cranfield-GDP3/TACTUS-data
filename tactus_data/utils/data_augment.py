@@ -48,7 +48,11 @@ class BK(Enum):
 
 
 class gridParam:
-    """"""
+    """
+    In grid param, each element are a list of parameters, one parameter
+    can be a list if there are multiple values to test. There is an
+    exception for scaling where you just put all the possibilities you want to do
+    """
 
     def __init__(self, noise=0, translation=0, rotation=0, scaling=0):
         self.noise = noise
@@ -58,9 +62,9 @@ class gridParam:
 
     def init_test(self):
         self.noise = [[1], [4]]
-        self.translation = [[0], [0], [0, -5, 10]]
-        self.rotation = [[0, 60, -60, 180], [0], [0, 10, -10]]
-        self.scaling = [[1,1,1],[1.2,1.2,1.2],[0.8,0.8,0.8]]
+        self.translation = [[0], [0], [0]]
+        self.rotation = [[0, 20, -20], [0, 180, 30, -30], [0, 10, -10]]
+        self.scaling = [[1, 1, 1], [1.1, 1, 1], [0.9, 1, 1], [1, 1.1, 1], [1, 0.9, 1]]
         return self
 
 
@@ -168,12 +172,12 @@ def noise_2d(input_folder_path: Path,
                     noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
                     for point in range(0, 5 * 3, 3):  # uniform noise for the face
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point+1] += noise_for_facey
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point + 1] += noise_for_facey
                     for point in range(5 * 3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
                                 noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point+1] += (
+                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point + 1] += (
                                 noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
             new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
             with open(str(output_folder_path / new_json_name[len(new_json_name) - 1]),
@@ -186,7 +190,7 @@ def _get_transform_matrix(resolution: list[int, int],
                           translation: list,
                           rotation: list,
                           scaling: list):
-    """"""
+    """Create the transform matrix using cartesian dimension"""
     # split input
     t_x, t_y, t_z = translation
     r_x, r_y, r_z = rotation
@@ -253,6 +257,10 @@ def _get_transform_matrix(resolution: list[int, int],
 
 def _cart_augment(M,
                   original_keypoints: list):
+    """
+    Compute the new keypoints value using the cartesian dimension
+    Matrix
+    """
     keypoints = []
     for i in range(0, len(original_keypoints) - 1, 3):
         keypoints.append([original_keypoints[i], original_keypoints[i + 1]])
@@ -270,7 +278,24 @@ def multiaugment(input_folder_path: Path,
                  translation: list,
                  rotation: list,
                  scaling: list):
-    """"""
+    """
+    input_folder_path : Path,
+                path of the folder where the original json are located
+    json_name : list[str],
+                a list of json files names that are going to be updated
+                Ex: ["file.json"]
+    output_folder_path : Path,
+                  path of the folder where the new generated json are
+                  saved
+    translation : list,
+                  list of the parameters for translation matrix
+                  [tx, ty, tz]
+    rotation : list,
+               list of the parameters for rotation matrix [rx, ry, rz]
+    scaling : list,
+              list of the parameters for the scaling matrix
+              [sx, sy, sz]
+    """
     new_json_name = []
     for file_name in json_name:
         with open(str(input_folder_path / file_name)) as file:
@@ -294,45 +319,26 @@ def grid_augment(path_json: Path,
                  grid: gridParam,
                  max_copy: int = -1):
     """
-    Generate 1 json with new skeleton sizes, it is possible to change
-    size of multiple skeleton on a picture with different factors the
-    goal is to create interaction with different size individual
+    Generate multiple json from an original json with different types
+    of augments like translation, rotation, scaling on all 3 axis.
 
     Parameters
     ----------
     path_json : Path,
                 path where the original json file is located
-    grid : list[list[list]],
-           the grid of value that will be use for the grid search the
-           gris is a list of list, each element of the list a list of
-           all the argument of each augment can take without including
-           the path, in the form of another list :
-
-           [list_flip_h, list_camera_distance_2d,list_rotation_2d,
-           list_noise_2d]
-
-           Ex:
-           list_flip_h = [True, False]
-           list_camera_distance_2d =[distance,focal_length]
-           list_rotation_2d = [max_angle,num_copy,rotate_center]
-           list_noise_2d = [num_copy, noise_magnitude]
-           If you don't want an augment to be used just put an empty
-           list
-           list_camera_distance_2d :
-            - distance = [-5,-2, 2, 5, 10, 15]
-            - focal_length = [2.8, 3.6, 4.0, 6.0]
+    grid : gridParam,
+           storing all needed parameters for augments
     max_copy : int,
                Maximum copy of an original file that can be
                generated
     """
     parent_folder = path_json.parent
-    video_name = parent_folder.parts[len(parent_folder.parts) - 2]
     choice_rotation = list(product(grid.rotation[0], grid.rotation[1], grid.rotation[2]))
     choice_translation = list(product(grid.translation[0], grid.translation[1], grid.translation[2]))
     choice_scaling = grid.scaling
     choice_noise = list(product(grid.noise[0], grid.noise[1]))
     generator = product(choice_translation, choice_rotation, choice_scaling, choice_noise)
-
+    next(generator)  # don't look at original value
     generated_pic = 0
     counter = 1
     if max_copy == -1:
@@ -351,9 +357,10 @@ def grid_augment(path_json: Path,
             with open(str(parent_folder / new_name),
                       'w') as outfile:
                 json.dump(original_data, outfile)
-            # No parameter on flip so True / false
-            result_multiaugment = multiaugment(parent_folder,[new_name],parent_folder,indices[0],indices[1],indices[2])
+            result_multiaugment = multiaugment(parent_folder, [new_name], parent_folder, indices[0], indices[1],
+                                               indices[2])
             result_noise = noise_2d(parent_folder, result_multiaugment, parent_folder, indices[3][0], indices[3][1])
+            print("For : ", new_name, "parameters : ", indices)
             generated_pic += len(result_noise)
             counter += 1
     return generated_pic

@@ -9,7 +9,7 @@ from tactus_data.utils import video_to_img
 from tactus_data.utils.retracker import stupid_reid
 from tactus_data.utils.skeletonization import yolov7
 from tactus_data.utils.skeletonization import MODEL_WEIGHTS_PATH
-from tactus_data.utils.data_augment import grid_augment
+from tactus_data.utils.data_augment import grid_augment, gridParam
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -129,44 +129,23 @@ def _count_files_in_dir(directory: Path, pattern: str):
 
 
 def augment_all_vid(input_folder_path: Path,
-                    grid: list[list[list]],
+                    grid: gridParam,
                     fps: int,
                     json_name: str = "yolov7.json",
                     max_copy: int = -1,
                     random_seed: int = 30000):
     """
-    Generate 1 json with a new scaling of skeletons. The distance
-    parameter allows you to virtually move the camera further or closer
-    to the frame so that the scale change accordingly, distance is in
-    meters represent the distance added on the original position of the
-    camera, if the camera goes closer(-) / further(+).
+    Run grid_augment() which generate multiple json from an original
+    json with different types of augments like translation, rotation,
+    scaling on all 3 axis. For all the json files in the data/processed
+    folder
 
     Parameters
     ----------
     input_folder_path : Path,
-                path of the folder where the original json are located
-    grid : list[list[list]],
-           the grid of value that will be use for the grid search the
-           gris is a list of list, each element of the list a list of
-           all the argument of each augment can take without including
-           the path, in the form of another list :
-
-           [list_flip_h, list_camera_distance_2d,list_rotation_2d,
-           list_noise_2d]
-
-           Ex:
-           list_flip_h = [True, False]
-           list_camera_distance_2d =[distance,focal_length]
-           list_rotation_2d = [max_angle,num_copy,rotate_center]
-           list_noise_2d = [num_copy, noise_magnitude]
-           If you don't want an augment to be used just put an empty
-           list
-           list_camera_distance_2d :
-            - distance = [-5,-2, 2, 5, 10, 15]
-            - focal_length = [2.8, 3.6, 4.0, 6.0]
-            Grid for testing : [[True, False], [[0, 5], [3.6]],
-                               [[-10, 0, 10],[1], [(BK.LAnkle,
-                               BK.RAnkle)]], [[1], [0, 4]]]
+                path to the folder where the original jsons are located
+    grid : gripParam,
+           storing all needed parameters for augments
     fps : int,
           pick the fps folder you want to augment for each video
           (the fps folder must exist)
