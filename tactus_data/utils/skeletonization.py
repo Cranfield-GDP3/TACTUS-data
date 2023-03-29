@@ -1,4 +1,6 @@
 from pathlib import Path
+from enum import Enum
+from typing import Union
 import cv2
 from tactus_yolov7 import Yolov7
 
@@ -33,19 +35,23 @@ def yolov7(input_dir: Path, model: Yolov7):
 
     return formatted_json
 
+
 def delete_confidence_kpt(skeleton: list) -> list:
     """delete the confidence for each keypoint of a skeleton"""
     return drop_every_nth_index(skeleton, 3)
+
 
 def drop_every_nth_index(initial_list: list, n: int) -> list:
     """remove every nth index from a list"""
     del initial_list[n-1::n]
     return initial_list
 
+
 def round_values(skeleton: list) -> list:
     """round all the values of a list. Useful to save a lot of space
     when saving the skeletons to a file"""
     return [round(kpt) for kpt in skeleton]
+
 
 def round_skeleton_kpts(skeleton: list, n: int) -> list:
     """round all the values of a list except every nth index. Useful
@@ -57,3 +63,62 @@ def round_skeleton_kpts(skeleton: list, n: int) -> list:
             skeleton[i] = round(kpt, 2)
 
     return skeleton
+
+
+def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
+    """returns keypoints to two separate lists of x and y coordinates
+    If a tuple of x and y coordinates are provided, do nothing"""
+    if isinstance(keypoints, (int, float)):
+        return keypoints[::3], keypoints[1::3]
+
+    return keypoints
+
+
+def skeleton_bbx(keypoints: Union[list, tuple]):
+    """return the x_left, y_bottom, width and height of a skeleton"""
+    keypoints_x, keypoints_y = keypoints_to_xy(keypoints)
+
+    min_x = min(keypoints_x)
+    max_x = max(keypoints_x)
+    min_y = min(keypoints_y)
+    max_y = max(keypoints_y)
+
+    return min_x, min_y, max_x-min_x, max_y-min_y
+
+
+class BK(Enum):
+    """represent a skeleton body keypoints"""
+    Nose = 0
+    LEye = 1
+    REye = 2
+    LEar = 3
+    REar = 4
+    LShoulder = 5
+    RShoulder = 6
+    LElbow = 7
+    RElbow = 8
+    LWrist = 9
+    RWrist = 10
+    LHip = 11
+    RHip = 12
+    LKnee = 13
+    RKnee = 14
+    LAnkle = 15
+    RAnkle = 16
+
+    list_link = [(RAnkle, RKnee),
+                 (LAnkle, LKnee),
+                 (RKnee, RHip),
+                 (LKnee, LHip),
+                 (RHip, LHip),
+                 (RHip, RShoulder),
+                 (LHip, LShoulder),
+                 (RShoulder, LShoulder),
+                 (RShoulder, RElbow),
+                 (RElbow, RWrist),
+                 (LShoulder, LElbow),
+                 (LElbow, LWrist),
+                 (Nose, LEye),
+                 (Nose, REye),
+                 (LEye, LEar),
+                 (REye, REar)]
