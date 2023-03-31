@@ -68,7 +68,7 @@ def round_skeleton_kpts(skeleton: list, n: int) -> list:
 def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
     """returns keypoints to two separate lists of x and y coordinates
     If a tuple of x and y coordinates are provided, do nothing"""
-    if isinstance(keypoints, (int, float)):
+    if isinstance(keypoints[0], (int, float)):
         return keypoints[::3], keypoints[1::3]
 
     return keypoints
