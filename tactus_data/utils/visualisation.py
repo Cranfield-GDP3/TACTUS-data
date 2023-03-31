@@ -1,6 +1,7 @@
 from typing import Union
 import io
 
+from matplotlib import pyplot as plt
 from matplotlib import axes, figure
 from matplotlib import patches
 import numpy as np
@@ -63,4 +64,6 @@ def fig_to_numpy(fig: figure.Figure) -> np.ndarray:
         data = np.frombuffer(buff.getvalue(), dtype=np.uint8)
     width, height = fig.canvas.get_width_height()
     img = data.reshape((int(height), int(width), -1))
+
+    plt.close(fig)
     return img
