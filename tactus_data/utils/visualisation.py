@@ -6,7 +6,7 @@ from matplotlib import axes, figure
 from matplotlib import patches
 import numpy as np
 
-from tactus_data.utils.skeletonization import keypoints_to_xy, skeleton_bbx
+from tactus_data.utils.skeletonization import keypoints_to_xy, skeleton_bbx, BK
 
 
 def plot_bbx(ax: axes.Axes, keypoints: Union[list, tuple],
@@ -32,7 +32,9 @@ def scatter_skeleton_2d(ax: axes.Axes, keypoints: Union[list, tuple]):
     ax.scatter(keypoints_x, keypoints_y)
 
 
-def plot_skeleton_2d(ax: axes.Axes, keypoints: Union[list, tuple], joints: list):
+def plot_skeleton_2d(ax: axes.Axes,
+                     keypoints: Union[list, tuple],
+                     joints: list = BK.list_link.value):
     """draw the skeleton using lines between keypoints"""
     keypoints_x, keypoints_y = keypoints_to_xy(keypoints)
 
