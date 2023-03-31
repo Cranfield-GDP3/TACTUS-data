@@ -9,9 +9,27 @@ import numpy as np
 from tactus_data.utils.skeletonization import keypoints_to_xy, skeleton_bbx, BK
 
 
-def plot_bbx(ax: axes.Axes, keypoints: Union[list, tuple],
-             *, color: str = "red", label: str = None):
-    """compute and plot the bounding box of a skeleton. A label can be added"""
+def plot_bbx(ax: axes.Axes,
+             keypoints: Union[list, tuple],
+             *,
+             color: str = "red",
+             label: str = None):
+    """
+    compute and plot the bounding box of a skeleton.
+
+    Parameters
+    ----------
+    ax : axes.Axes
+        matplotlib ax of the current plot
+    keypoints : Union[list, tuple]
+        keypoints of a skeleton. Can either be a long list of
+        bodykeypoints like [x1, y1, c1, x2, y2, c2, ...] or a tuple of
+        x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+    color : str, optional
+        _description_, by default "red"
+    label : str, optional
+        _description_, by default None
+    """
     x_left, y_bottom, width, height = skeleton_bbx(keypoints)
 
     box = patches.Rectangle(
@@ -27,7 +45,18 @@ def plot_bbx(ax: axes.Axes, keypoints: Union[list, tuple],
 
 
 def scatter_skeleton_2d(ax: axes.Axes, keypoints: Union[list, tuple]):
-    """display individual keypoints of a skeleton"""
+    """
+    display individual keypoints of a skeleton.
+
+    Parameters
+    ----------
+    ax : axes.Axes
+        matplotlib ax of the current plot
+    keypoints : Union[list, tuple]
+        keypoints of a skeleton. Can either be a long list of
+        bodykeypoints like [x1, y1, c1, x2, y2, c2, ...] or a tuple of
+        x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+    """
     keypoints_x, keypoints_y = keypoints_to_xy(keypoints)
     ax.scatter(keypoints_x, keypoints_y)
 
@@ -35,7 +64,18 @@ def scatter_skeleton_2d(ax: axes.Axes, keypoints: Union[list, tuple]):
 def plot_skeleton_2d(ax: axes.Axes,
                      keypoints: Union[list, tuple],
                      joints: list = BK.list_link.value):
-    """draw the skeleton using lines between keypoints"""
+    """
+    draw the skeleton using lines between keypoints.
+
+    Parameters
+    ----------
+    ax : axes.Axes
+        matplotlib ax of the current plot
+    keypoints : Union[list, tuple]
+        keypoints of a skeleton. Can either be a long list of
+        bodykeypoints like [x1, y1, c1, x2, y2, c2, ...] or a tuple of
+        x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+    """
     keypoints_x, keypoints_y = keypoints_to_xy(keypoints)
 
     for joint_kp_1, joint_kp_2 in joints:
@@ -46,12 +86,30 @@ def plot_skeleton_2d(ax: axes.Axes,
 
 
 def background_image(ax: axes.Axes, img: np.ndarray):
-    """add an image in the plot background"""
+    """
+    add an image in the plot background.
+
+    Parameters
+    ----------
+    ax : axes.Axes
+        matplotlib ax of the current plot
+    img : np.ndarray
+        rgb image to show in the background
+    """
     ax.imshow(img)
 
 
 def set_limits(ax: axes.Axes, resolution: tuple[int, int]):
-    """define x axis and y axis limits to avoid auto resize of the canva"""
+    """
+    define x axis and y axis limits to avoid auto resize of the canva.
+
+    Parameters
+    ----------
+    ax : axes.Axes
+        _description_
+    resolution : tuple[int, int]
+        width and height of the frame
+    """
     ax.set_xlim(left=0, right=resolution[1])
     ax.set_ylim(bottom=0, top=resolution[0])
     ax.set_ylim(ax.get_ylim()[::-1])

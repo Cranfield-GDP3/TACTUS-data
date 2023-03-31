@@ -66,16 +66,43 @@ def round_skeleton_kpts(skeleton: list, n: int) -> list:
 
 
 def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
-    """returns keypoints to two separate lists of x and y coordinates
-    If a tuple of x and y coordinates are provided, do nothing"""
+    """
+    return a tuple of x and y coordinates
+
+    Parameters
+    ----------
+    keypoints : Union[list, tuple]
+        keypoints of a skeleton. Can either be a long list of
+        bodykeypoints like [x1, y1, c1, x2, y2, c2, ...] or a tuple of
+        x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+
+    Returns
+    -------
+    tuple[list, list]
+        tuple of x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+    """
     if isinstance(keypoints[0], (int, float)):
         return keypoints[::3], keypoints[1::3]
 
     return keypoints
 
 
-def skeleton_bbx(keypoints: Union[list, tuple]):
-    """return the x_left, y_bottom, width and height of a skeleton"""
+def skeleton_bbx(keypoints: Union[list, tuple]) -> tuple[int, int, int, int]:
+    """
+    return the x_left, y_bottom, width and height of a skeleton
+
+    Parameters
+    ----------
+    keypoints : Union[list, tuple]
+        keypoints of a skeleton. Can either be a long list of
+        bodykeypoints like [x1, y1, c1, x2, y2, c2, ...] or a tuple of
+        x, y coordinates ([x1, x2, ...], [y1, y2, ...])
+
+    Returns
+    -------
+    tuple[int, int, int, int]
+        (x_left, y_bottom, width, height)
+    """
     keypoints_x, keypoints_y = keypoints_to_xy(keypoints)
 
     min_x = min(keypoints_x)
