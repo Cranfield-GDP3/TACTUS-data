@@ -88,6 +88,7 @@ def transform_matrix_from_grid(
         rotation_z: float = 0,
         scale_x: float = 1,
         scale_y: float = 1,
+        **_
         ) -> np.ndarray:
     if transform_dict is not None and isinstance(transform_dict, dict):
         return transform_matrix_from_grid(resolution, **transform_dict)
