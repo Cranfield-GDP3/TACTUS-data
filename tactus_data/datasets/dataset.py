@@ -9,7 +9,6 @@ from tactus_data.utils import video_to_img
 from tactus_data.utils.retracker import stupid_reid
 from tactus_data.utils.skeletonization import yolov7
 from tactus_data.utils.skeletonization import MODEL_WEIGHTS_PATH
-from tactus_data.utils.data_augment import grid_augment, gridParam
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -129,7 +128,7 @@ def _count_files_in_dir(directory: Path, pattern: str):
 
 
 def augment_all_vid(input_folder_path: Path,
-                    grid: gridParam,
+                    grid,
                     fps: int,
                     json_name: str = "yolov7.json",
                     max_copy: int = -1,
@@ -156,13 +155,13 @@ def augment_all_vid(input_folder_path: Path,
                generated
     random_seed : value of the random seed to replicated same training data
     """
-    random.seed(random_seed)
-    total_cpy = 0
-    list_dir = list(input_folder_path.iterdir())
-    list_dir.remove(input_folder_path / "readme.md")
-    for path_dir in tqdm(list_dir):
-        vid_path = Path(path_dir / _fps_folder_name(fps))
-        vid_name = vid_path.glob('**/' + json_name)
-        for injson in vid_name:
-            total_cpy += grid_augment(injson, grid, max_copy)
-    print("Generated ",total_cpy, "copies")
+    # random.seed(random_seed)
+    # total_cpy = 0
+    # list_dir = list(input_folder_path.iterdir())
+    # list_dir.remove(input_folder_path / "readme.md")
+    # for path_dir in tqdm(list_dir):
+    #     vid_path = Path(path_dir / _fps_folder_name(fps))
+    #     vid_name = vid_path.glob('**/' + json_name)
+    #     for injson in vid_name:
+    #         total_cpy += grid_augment(injson, grid, max_copy)
+    # print("Generated ",total_cpy, "copies")
