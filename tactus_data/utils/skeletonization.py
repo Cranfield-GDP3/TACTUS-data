@@ -25,7 +25,9 @@ def yolov7(input_dir: Path, model: Yolov7):
         max_nbr_skeletons = max(max_nbr_skeletons, len(skeletons))
 
         for i, skeleton in enumerate(skeletons):
+            skeletons[i]["keypoints"] = king_of_france(skeletons[i]["keypoints"])
             skeletons[i]["keypoints"] = round_skeleton_kpts(skeleton["keypoints"], 3)
+            skeletons[i]["keypoints"] = remove_confidence_points(skeletons[i]["keypoints"])
 
         frame_json["skeletons"] = skeletons
         formatted_json["frames"].append(frame_json)
@@ -57,9 +59,9 @@ def round_skeleton_kpts(skeleton: list, n: int) -> list:
     """round all the values of a list except every nth index. Useful
     to save a lot of space when saving the skeletons to a file"""
     for i, kpt in enumerate(skeleton):
-        if i%n != n-1: # kpt coordinates
+        if i % n != n-1:  # kpt coordinates
             skeleton[i] = round(kpt)
-        else: # kpt confidence
+        else:  # kpt confidence
             skeleton[i] = round(kpt, 2)
 
     return skeleton
@@ -82,7 +84,7 @@ def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
         tuple of x, y coordinates ([x1, x2, ...], [y1, y2, ...])
     """
     if isinstance(keypoints[0], (int, float)):
-        return keypoints[::3], keypoints[1::3]
+        return keypoints[::2], keypoints[1::2]
 
     return keypoints
 
@@ -113,25 +115,60 @@ def skeleton_bbx(keypoints: Union[list, tuple]) -> tuple[int, int, int, int]:
     return min_x, min_y, max_x-min_x, max_y-min_y
 
 
+def king_of_france(keypoints: list) -> list:
+    """replace the head of a skeleton by its neck"""
+    period = None
+    if len(keypoints) == 51:
+        period = 3
+    elif len(keypoints) == 34:
+        period = 2
+
+    if period is not None:
+        LEar_index = 3
+        REar_index = 4
+        kp_LEar = keypoints[LEar_index*period:LEar_index*(period+1)]
+        kp_REar = keypoints[REar_index*period:REar_index*(period+1)]
+        neck_kp = create_middle_keypoint(kp_LEar, kp_REar)
+        return neck_kp + keypoints[5*period:]
+
+    raise ValueError("The skeleton is already beheaded")
+
+
+def create_middle_keypoint(kp_1: list, kp_2: list):
+    """create a middle keypoint from two keypoint"""
+    new_kp = [0] * len(kp_1)
+
+    for i, _ in enumerate(kp_1):
+        new_kp[i] = (kp_1[i] + kp_2[i]) / 2
+
+    return new_kp
+
+
+def remove_confidence_points(keypoints: list) -> list:
+    """remove confidence for every keypoints"""
+    if len(keypoints) % 3 == 0:
+        del keypoints[2::3]
+        return keypoints
+
+    raise ValueError("keypoints probably do not have confidence anymore",
+                     "as the length is not dividable by 3")
+
+
 class BK(Enum):
     """represent a skeleton body keypoints"""
-    Nose = 0
-    LEye = 1
-    REye = 2
-    LEar = 3
-    REar = 4
-    LShoulder = 5
-    RShoulder = 6
-    LElbow = 7
-    RElbow = 8
-    LWrist = 9
-    RWrist = 10
-    LHip = 11
-    RHip = 12
-    LKnee = 13
-    RKnee = 14
-    LAnkle = 15
-    RAnkle = 16
+    Neck = 0
+    LShoulder = 1
+    RShoulder = 2
+    LElbow = 3
+    RElbow = 4
+    LWrist = 5
+    RWrist = 6
+    LHip = 7
+    RHip = 8
+    LKnee = 9
+    RKnee = 10
+    LAnkle = 11
+    RAnkle = 12
 
     list_link = [(RAnkle, RKnee),
                  (LAnkle, LKnee),
@@ -145,7 +182,6 @@ class BK(Enum):
                  (RElbow, RWrist),
                  (LShoulder, LElbow),
                  (LElbow, LWrist),
-                 (Nose, LEye),
-                 (Nose, REye),
-                 (LEye, LEar),
-                 (REye, REar)]
+                 (LShoulder, Neck),
+                 (RShoulder, Neck),
+                 ]
