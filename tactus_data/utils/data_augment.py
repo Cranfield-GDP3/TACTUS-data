@@ -74,12 +74,7 @@ def noise_2d(input_folder_path: Path,
             for frame in range(0, num_frame):
                 for skeleton in range(len(noisy_data['frames'][frame]['skeletons'])):
                     xscale, yscale = _skel_width_height(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"])
-                    noise_for_facex = noise_magnitude * random.random() * xscale * random.choice([-1, 1])
-                    noise_for_facey = noise_magnitude * random.random() * yscale * random.choice([-1, 1])
-                    for point in range(0, 5 * 3, 3):  # uniform noise for the face
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += noise_for_facex
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point + 1] += noise_for_facey
-                    for point in range(5 * 3, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
+                    for point in range(0, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
                         # not changing face keypoints
                         noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
                                 noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
