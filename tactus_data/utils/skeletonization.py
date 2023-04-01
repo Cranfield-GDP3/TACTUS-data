@@ -26,7 +26,7 @@ def yolov7(input_dir: Path, model: Yolov7):
 
         for i, skeleton in enumerate(skeletons):
             skeletons[i]["keypoints"] = king_of_france(skeletons[i]["keypoints"])
-            skeletons[i]["keypoints"] = round_skeleton_kpts(skeleton["keypoints"], 3)
+            skeletons[i]["keypoints"] = round_skeleton_kpts(skeleton["keypoints"])
             skeletons[i]["keypoints"] = remove_confidence_points(skeletons[i]["keypoints"])
 
         frame_json["skeletons"] = skeletons
@@ -44,14 +44,20 @@ def round_values(skeleton: list) -> list:
     return [round(kpt) for kpt in skeleton]
 
 
-def round_skeleton_kpts(skeleton: list, n: int) -> list:
+def round_skeleton_kpts(skeleton: list) -> list:
     """round all the values of a list except every nth index. Useful
     to save a lot of space when saving the skeletons to a file"""
     for i, kpt in enumerate(skeleton):
-        if i % n != n-1:  # kpt coordinates
+        # if it still have confidence (beheaded or not)
+        if len(skeleton) in [39, 51]:
+            if i % 3 != 2:
+                skeleton[i] = round(kpt)
+            else:
+                skeleton[i] = round(kpt, 2)
+
+        # if it doesn't have confidence (beheaded or not)
+        elif len(skeleton) in [26, 34]:
             skeleton[i] = round(kpt)
-        else:  # kpt confidence
-            skeleton[i] = round(kpt, 2)
 
     return skeleton
 
