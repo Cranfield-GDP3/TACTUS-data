@@ -16,8 +16,8 @@ DEFAULT_GRID = {
     "rotation_y": np.linspace(-20, 20, 3),
     "rotation_z": np.linspace(-20, 20, 3),
     "rotation_x": np.linspace(-20, 20, 3),
-    "scaling_x": np.linspace(0.8, 1.2, 3),
-    "scaling_y": np.linspace(0.8, 1.2, 3),
+    "scale_x": np.linspace(0.8, 1.2, 3),
+    "scale_y": np.linspace(0.8, 1.2, 3),
 }
 
 
@@ -78,16 +78,6 @@ def augment_transform(keypoints: list, transform_mat: np.ndarray) -> list:
     return keypoints.flatten()
 
 
-def augment_skeleton(keypoints: list,
-                     matrix: np.ndarray,
-                     noise_amplitude: float = 0,
-                     ) -> list:
-    keypoints = augment_transform(keypoints, matrix)
-    keypoints = augment_noise_2d(keypoints, noise_amplitude)
-
-    return keypoints
-
-
 def transform_matrix_from_grid(
         resolution,
         transform_dict: dict = None,
@@ -96,18 +86,18 @@ def transform_matrix_from_grid(
         rotation_x: float = 0,
         rotation_y: float = 0,
         rotation_z: float = 0,
-        scaling_x: float = 0,
-        scaling_y: float = 0,
+        scale_x: float = 1,
+        scale_y: float = 1,
         ) -> np.ndarray:
     if transform_dict is not None and isinstance(transform_dict, dict):
         return transform_matrix_from_grid(resolution, **transform_dict)
 
-    h_flip_coef = 1 if horizontal_flip else -1
-    v_flip_coef = 1 if vertical_flip else -1
+    h_flip_coef = -1 if horizontal_flip else 1
+    v_flip_coef = -1 if vertical_flip else 1
 
     return get_transform_matrix(resolution,
                                 (rotation_x, rotation_y, rotation_z),
-                                (h_flip_coef*scaling_x, v_flip_coef*scaling_y, 1))
+                                (h_flip_coef*scale_x, v_flip_coef*scale_y, 1))
 
 
 def get_transform_matrix(resolution: tuple[int, int],
@@ -178,3 +168,13 @@ def get_transform_matrix(resolution: tuple[int, int],
     M_cart = T_M.dot(R_M).dot(S_M)
     M_final = M_fromcart.dot(M_cart).dot(M_tocart)
     return M_final
+
+
+def augment_skeleton(keypoints: list,
+                     matrix: np.ndarray,
+                     noise_amplitude: float = 0,
+                     ) -> list:
+    keypoints = augment_transform(keypoints, matrix)
+    keypoints = augment_noise_2d(keypoints, noise_amplitude)
+
+    return keypoints
