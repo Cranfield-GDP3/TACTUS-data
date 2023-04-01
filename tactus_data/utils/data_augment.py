@@ -1,6 +1,6 @@
 import json
 import random
-from itertools import product
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -31,7 +31,7 @@ def _skel_width_height(keypoints: list):
     return xscale, yscale
 
 
-def augment_noise_2d(keypoints: list, noise_amplitude: float) -> list:
+def augment_noise_2d(keypoints: list, noise_amplitude: float) -> np.ndarray:
     """
     add noise to every keypoints of a skeleton
 
@@ -45,7 +45,7 @@ def augment_noise_2d(keypoints: list, noise_amplitude: float) -> list:
 
     Returns
     -------
-    list
+    np.ndarray
         list of all the new skeleton keypoints
     """
     xscale, yscale = _skel_width_height(keypoints)
@@ -57,7 +57,7 @@ def augment_noise_2d(keypoints: list, noise_amplitude: float) -> list:
     return keypoints
 
 
-def augment_transform(keypoints: list, transform_mat: np.ndarray) -> list:
+def augment_transform(keypoints: list, transform_mat: np.ndarray) -> np.ndarray:
     """
     transform a skeleton using a transformation matrix
 
@@ -70,10 +70,10 @@ def augment_transform(keypoints: list, transform_mat: np.ndarray) -> list:
 
     Returns
     -------
-    list
+    np.ndarray
         list of all the new skeleton keypoints
     """
-    keypoints = np.array(keypoints, dtype="float").reshape(-1, 2)
+    keypoints = np.array(keypoints, dtype="float").reshape((1, -1, 2))
     keypoints = cv2.perspectiveTransform(keypoints, transform_mat)
     return keypoints.flatten()
 
@@ -185,4 +185,27 @@ def augment_skeleton(keypoints: list,
     keypoints = augment_transform(keypoints, matrix)
     keypoints = augment_noise_2d(keypoints, noise_amplitude)
 
-    return keypoints
+    return keypoints.tolist()
+
+
+def grid_augment(formatted_json: Path,
+                 grid: dict):
+    original_data = json.load(formatted_json.open())
+    original_stem = formatted_json.stem
+
+    for i, params in enumerate(ParameterGrid(grid)):
+        matrix = transform_matrix_from_grid(original_data["resolution"], params)
+        if "noise_amplitude" in params:
+            noise_amplitude = params["noise_amplitude"]
+
+        augmented_json = copy.deepcopy(original_data)
+        for frame in augmented_json["frames"]:
+            for skeleton in frame["skeletons"]:
+                skeleton["keypoints"] = augment_skeleton(skeleton["keypoints"],
+                                                         matrix,
+                                                         noise_amplitude)
+
+        augmented_json["augmentation"] = params
+
+        new_filename = formatted_json.with_stem(f"{original_stem}_augment_{i}")
+        json.dump(augmented_json, new_filename.open(mode="w"))
