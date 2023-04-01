@@ -9,6 +9,68 @@ import cv2
 from tactus_data.utils.skeletonization import skeleton_bbx
 
 
+DEFAULT_GRID = {
+    "noise": np.linspace(1, 4, 2),
+    "rotation_y": np.concatenate(
+            np.linspace(-20, 20, 3),
+            np.linspace(-160, 200, 3), # flip
+        ),
+    "rotation_z": np.linspace(-20, 20, 3),
+    "rotation_x": np.linspace(-20, 20, 3),
+}
+
+
+def augment_noise_2d(keypoints: list, noise_amplitude: float) -> list:
+    """
+    add noise to every keypoints of a skeleton
+
+    Parameters
+    ----------
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    noise_amplitude : float
+        coefficient the random noise of maximum 1% of total skeleton
+        amplitude is multiplied by
+
+    Returns
+    -------
+    list
+        list of all the new skeleton keypoints
+    """
+    xscale, yscale = _skel_width_height(keypoints)
+
+    for i in range(0, len(keypoints), 2):
+        keypoints[i] += noise_amplitude * xscale * (random.random()*2-1)
+        keypoints[i+1] += noise_amplitude * yscale * (random.random()*2-1)
+
+    return keypoints
+
+def augment_transform(keypoints: list, transform_mat: np.ndarray) -> list:
+    """
+    transform a skeleton using a transformation matrix
+
+    Parameters
+    ----------
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    transform_mat : np.ndarray
+        _description_
+
+    Returns
+    -------
+    list
+        list of all the new skeleton keypoints
+    """
+    keypoints = np.array(keypoints, dtype="float").reshape(-1, 2)
+    keypoints = cv2.perspectiveTransform(keypoints, transform_mat)
+    return keypoints.flatten()
+
+
+
+
+
+
+
 class gridParam:
     """
     In grid param, each element are a list of parameters, one parameter
@@ -60,8 +122,7 @@ def noise_2d(input_folder_path: Path,
                number of copy to make with slight rotation until it
                reaches max_angle
     noise_magnitude : float,
-                      coefficient the random noise of maximum 1% of
-                      total skeleton amplitude is multiplied by
+        coefficient the random noise of maximum 1% of total skeleton amplitude is multiplied by
     """
     new_json_name = []
     for file_name in json_name:
