@@ -44,7 +44,7 @@ extras_require = {
 }
 
 setup(
-    name="TACTUS - data pipeline",
+    name="TACTUS - data",
     version=get_version("tactus_data/__init__.py"),
     description="Threatening activities classification toward users' security",
     long_description=long_description,
