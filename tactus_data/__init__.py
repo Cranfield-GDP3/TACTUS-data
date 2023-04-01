@@ -1,9 +1,9 @@
 # PEP 440 – Version Identification and Dependency Specification
 # https://peps.python.org/pep-0440/
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
-from .datasets import ut_interaction
-from .utils import skeletonization
-from .utils import visualisation
-from .utils import data_augment
-from .utils import retracker
+from tactus_data.datasets import ut_interaction
+from tactus_data.utils import skeletonization
+from tactus_data.utils import visualisation
+from tactus_data.utils import data_augment
+from tactus_data.utils import retracker
