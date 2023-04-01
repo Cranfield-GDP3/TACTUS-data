@@ -1,3 +1,55 @@
+"""
+Tools to visualise skeletons in beautiful ways.
+
+Usage
+-----
+from a yolov7.json
+
+```python
+from tactus_data.utils.skeletonization import keypoints_to_xy
+
+with open(path_json) as file:
+    data = json.load(file)
+
+plot_bck_image = True
+
+for frame in data["frames"]:
+    fig, ax = plt.subplots()
+
+    for skeleton in frame["skeletons"]:
+        keypoints = keypoints_to_xy(skeleton["keypoints"])
+        plot_skeleton_2d(ax, keypoints)
+        if "id_stupid" in skeleton:
+            plot_bbx(ax, keypoints)
+
+    frame_path = base_frame_path / frame["frame_id"]
+
+    if plot_bck_image:
+        background_image(ax, np.asarray(Image.open(frame_path)))
+    else:
+        set_limits(ax, np.asarray(Image.open(frame_path)).shape[:2])
+
+    plt.axis('off')
+    plt.show()
+```
+
+Live exportation to numpy array
+```python
+resolution = (90, 70)
+
+while True:
+    skeleton_list = extract_skeleton()
+
+    fig, ax = plt.subplots()
+    for skeleton in skeleton_list:
+        keypoints = keypoints_to_xy(skeleton["keypoints"])
+        plot_skeleton_2d(ax, keypoints)
+
+    set_limits(ax, resolution)
+    np_array = fig_to_numpy(fig)
+```
+"""
+
 from typing import Union
 import io
 
