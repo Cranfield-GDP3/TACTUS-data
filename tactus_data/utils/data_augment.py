@@ -79,42 +79,49 @@ def augment_transform(keypoints: list, transform_mat: np.ndarray) -> list:
 
 
 def transform_matrix_from_grid(
-        resolution,
+        resolution: tuple[int, int],
         transform_dict: dict = None,
-        horizontal_flip: bool = False,
-        vertical_flip: bool = False,
-        rotation_x: float = 0,
-        rotation_y: float = 0,
-        rotation_z: float = 0,
-        scale_x: float = 1,
-        scale_y: float = 1,
-        **_
         ) -> np.ndarray:
-    if transform_dict is not None and isinstance(transform_dict, dict):
-        return transform_matrix_from_grid(resolution, **transform_dict)
+    """
+    generate the transformation matrix from a dictionnary
 
-    h_flip_coef = -1 if horizontal_flip else 1
-    v_flip_coef = -1 if vertical_flip else 1
+    Parameters
+    ----------
+    resolution : tuple[int, int]
+        resolution of the incoming frame
+    transform_dict : dict, optional
+        dictionnary to create the matrix from, by default None
+
+    Returns
+    -------
+    np.ndarray
+        transformation matrix
+    """
 
     return get_transform_matrix(resolution,
-                                (rotation_x, rotation_y, rotation_z),
-                                (h_flip_coef*scale_x, v_flip_coef*scale_y, 1))
+                                **transform_dict)
 
 
 def get_transform_matrix(resolution: tuple[int, int],
-                         rotation: tuple[float, float, float],
-                         scaling: tuple[float, float, float],
-                         translation: tuple[float, float, float] = None,
+                         horizontal_flip: bool = False,
+                         vertical_flip: bool = False,
+                         rotation_x: float = 0,
+                         rotation_y: float = 0,
+                         rotation_z: float = 0,
+                         scale_x: float = 1,
+                         scale_y: float = 1,
+                         **_
                          ):
     """Create the transform matrix using cartesian dimension"""
     # split input
-    t_x, t_y, t_z = translation if translation is not None else (0, 0, 0)
-    r_x, r_y, r_z = rotation
-    s_x, s_y, s_z = scaling
+    h_flip_coef = -1 if horizontal_flip else 1
+    v_flip_coef = -1 if vertical_flip else 1
+    t_x, t_y, t_z = (0, 0, 0)
+    s_x, s_y, s_z = (h_flip_coef*scale_x, v_flip_coef*scale_y, 1)
     # degrees to rad
-    theta_rx = np.deg2rad(r_x)
-    theta_ry = np.deg2rad(r_y)
-    theta_rz = np.deg2rad(r_z)
+    theta_rx = np.deg2rad(rotation_x)
+    theta_ry = np.deg2rad(rotation_y)
+    theta_rz = np.deg2rad(rotation_z)
     # sin and cos
     sin_rx, cos_rx = np.sin(theta_rx), np.cos(theta_rx)
     sin_ry, cos_ry = np.sin(theta_ry), np.cos(theta_ry)
