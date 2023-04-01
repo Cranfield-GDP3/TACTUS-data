@@ -1,50 +1,12 @@
 import json
 import random
 from itertools import product
-from enum import Enum
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
 import cv2
 
-
-class BK(Enum):
-    Nose = 0
-    LEye = 1
-    REye = 2
-    LEar = 3
-    REar = 4
-    LShoulder = 5
-    RShoulder = 6
-    LElbow = 7
-    RElbow = 8
-    LWrist = 9
-    RWrist = 10
-    LHip = 11
-    RHip = 12
-    LKnee = 13
-    RKnee = 14
-    LAnkle = 15
-    RAnkle = 16
-
-    list_link = [(RAnkle, RKnee),
-                 (LAnkle, LKnee),
-                 (RKnee, RHip),
-                 (LKnee, LHip),
-                 (RHip, LHip),
-                 (RHip, RShoulder),
-                 (LHip, LShoulder),
-                 (RShoulder, LShoulder),
-                 (RShoulder, RElbow),
-                 (RElbow, RWrist),
-                 (LShoulder, LElbow),
-                 (LElbow, LWrist),
-                 (Nose, LEye),
-                 (Nose, REye),
-                 (LEye, LEar),
-                 (REye, REar)]
+from tactus_data.utils.skeletonization import skeleton_bbx
 
 
 class gridParam:
@@ -63,64 +25,13 @@ class gridParam:
         self.scaling = scaling
 
 
-def plot_skeleton_2d(path_json: Path,
-                     path_frame: Path,
-                     frame_number: int = 0,
-                     show_frame: bool = True):
-    """
-    Plot the 2D skeleton (keypoint and limbs) on top of the
-    corresponding frame for testing purpose on the different
-    augment
-
-    Parameters
-    ----------
-    path_json : Path,
-                path where the json file is located
-    path_frame : Path,
-                 path where the frame file is located
-    frame_number : int,
-                   Number of the frame you want to plot
-    show_frame : bool,
-                 If false allows you to see only skeleton
-    """
-    with open(path_json) as file:
-        data = json.load(file)
-    fig, ax = plt.subplots()
-    max_frame = len(data['frames']) - 1
-
-    if frame_number > max_frame:
-        frame_number = max_frame
-    for skeletons in data['frames'][frame_number]['skeletons']:
-        keypoints = skeletons["keypoints"]
-        keypoints_x = []
-        keypoints_y = []
-        confidence = []
-        for i in range(0, len(keypoints), 3):
-            keypoints_x.append(keypoints[i])
-            keypoints_y.append(keypoints[i + 1])
-            confidence.append(keypoints[i + 2])
-        ax.scatter(keypoints_x, keypoints_y)
-        for i in BK.list_link.value:
-            ax.plot([keypoints_x[i[0]], keypoints_x[i[1]]],
-                    [keypoints_y[i[0]], keypoints_y[i[1]]])
-    if show_frame:
-        img = np.asarray(Image.open(path_frame))
-        plt.imshow(img)
-    else:
-        ax.set_ylim(ax.get_ylim()[::-1])  # (0,0) in top left hand corner
-    plt.show()
-
-
 def _skel_width_height(keypoints: list):
     """Used by noise_2d(): Returns the max width and height of
        skeletons keypoints
     """
-    xmax = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
-    xmin = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 0)[0]
-    ymax = min((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
-    ymin = max((val, index) for index, val in enumerate(keypoints) if index % 3 == 1)[0]
-    xscale = (int(xmax) - int(xmin)) / 100
-    yscale = (int(ymax) - int(ymin)) / 100
+    _, _, width, height = skeleton_bbx(keypoints)
+    xscale = width / 100
+    yscale = height / 100
     return xscale, yscale
 
 
@@ -349,8 +260,7 @@ def grid_augment(path_json: Path,
         else:
             # create copy json with final name
             new_name = path_json.stem + "_augment_" + str(counter) + ".json"
-            with open(str(parent_folder / new_name),
-                      'w') as outfile:
+            with open(str(parent_folder / new_name), 'w') as outfile:
                 json.dump(original_data, outfile)
             result_multiaugment = multiaugment(parent_folder, [new_name], parent_folder, indices[0], indices[1],
                                                indices[2])
