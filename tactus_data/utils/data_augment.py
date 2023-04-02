@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 from sklearn.model_selection._search import ParameterGrid
 
-from tactus_data.utils.skeletonization import skeleton_bbx
+from tactus_data.utils.skeletonization import skeleton_bbx, round_skeleton_kpts
 
 
 DEFAULT_GRID = {
@@ -51,8 +51,8 @@ def augment_noise_2d(keypoints: list, noise_amplitude: float) -> np.ndarray:
     xscale, yscale = _skel_width_height(keypoints)
 
     for i in range(0, len(keypoints), 2):
-        keypoints[i] += noise_amplitude * xscale * (random.random()*2-1)
-        keypoints[i+1] += noise_amplitude * yscale * (random.random()*2-1)
+        keypoints[i] += noise_amplitude * xscale * (random.random() * 2 - 1)
+        keypoints[i + 1] += noise_amplitude * yscale * (random.random() * 2 - 1)
 
     return keypoints
 
@@ -184,6 +184,7 @@ def augment_skeleton(keypoints: list,
                      ) -> list:
     keypoints = augment_transform(keypoints, matrix)
     keypoints = augment_noise_2d(keypoints, noise_amplitude)
+    keypoints = round_skeleton_kpts(keypoints)
 
     return keypoints.tolist()
 
@@ -195,6 +196,8 @@ def grid_augment(formatted_json: Path,
 
     for i, params in enumerate(ParameterGrid(grid)):
         matrix = transform_matrix_from_grid(original_data["resolution"], params)
+
+        noise_amplitude = 0
         if "noise_amplitude" in params:
             noise_amplitude = params["noise_amplitude"]
 
