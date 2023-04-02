@@ -2,6 +2,7 @@ import json
 import random
 import copy
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import cv2
@@ -206,7 +207,8 @@ def augment_skeleton(keypoints: list,
     return keypoints.tolist()
 
 
-def grid_augment(formatted_json: Path, grid: dict):
+def grid_augment(formatted_json: Path,
+                 grid: Union[dict[str, list], list[dict[str, list]]]):
     """
     augment a JSON with a grid of parameters. The result files
     are going to be written in the same folder as the original
@@ -216,9 +218,12 @@ def grid_augment(formatted_json: Path, grid: dict):
     ----------
     formatted_json : Path
         the path to the JSON that is going to be augmented
-    grid : dict
-        the grid that is going to be used to generate every
-        combination for the augmentation
+    grid : dict[str, list] | list[dict[str, list]]
+        The parameter grid to explore, as a dictionary mapping estimator
+        parameters to sequences of allowed values.
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
     """
     original_data = json.load(formatted_json.open())
     original_stem = formatted_json.stem
