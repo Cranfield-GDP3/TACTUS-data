@@ -117,7 +117,7 @@ def get_transform_matrix(resolution: tuple[int, int],
     h_flip_coef = -1 if horizontal_flip else 1
     v_flip_coef = -1 if vertical_flip else 1
     t_x, t_y, t_z = (0, 0, 0)
-    s_x, s_y, s_z = (h_flip_coef*scale_x, v_flip_coef*scale_y, 1)
+    s_x, s_y, s_z = (h_flip_coef * scale_x, v_flip_coef * scale_y, 1)
     # degrees to rad
     theta_rx = np.deg2rad(rotation_x)
     theta_ry = np.deg2rad(rotation_y)
@@ -182,6 +182,23 @@ def augment_skeleton(keypoints: list,
                      matrix: np.ndarray,
                      noise_amplitude: float = 0,
                      ) -> list:
+    """
+    augment a single skeleton
+
+    Parameters
+    ----------
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    matrix : np.ndarray
+        transformation matrix of size (3*3)
+    noise_amplitude : float, optional
+        the noise amplitude, by default 0
+
+    Returns
+    -------
+    list
+        the augmented skeleton
+    """
     keypoints = augment_transform(keypoints, matrix)
     keypoints = augment_noise_2d(keypoints, noise_amplitude)
     keypoints = round_skeleton_kpts(keypoints)
@@ -189,8 +206,20 @@ def augment_skeleton(keypoints: list,
     return keypoints.tolist()
 
 
-def grid_augment(formatted_json: Path,
-                 grid: dict):
+def grid_augment(formatted_json: Path, grid: dict):
+    """
+    augment a JSON with a grid of parameters. The result files
+    are going to be written in the same folder as the original
+    file.
+
+    Parameters
+    ----------
+    formatted_json : Path
+        the path to the JSON that is going to be augmented
+    grid : dict
+        the grid that is going to be used to generate every
+        combination for the augmentation
+    """
     original_data = json.load(formatted_json.open())
     original_stem = formatted_json.stem
 
