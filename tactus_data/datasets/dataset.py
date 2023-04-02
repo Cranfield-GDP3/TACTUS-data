@@ -9,6 +9,7 @@ from tactus_data.utils import video_to_img
 from tactus_data.utils.retracker import stupid_reid
 from tactus_data.utils.skeletonization import yolov7
 from tactus_data.utils.skeletonization import MODEL_WEIGHTS_PATH
+from tactus_data.utils.data_augment import grid_augment, DEFAULT_GRID
 
 RAW_DIR = Path("data/raw/")
 INTERIM_DIR = Path("data/interim/")
@@ -128,10 +129,9 @@ def _count_files_in_dir(directory: Path, pattern: str):
 
 
 def augment_all_vid(input_folder_path: Path,
-                    grid,
-                    fps: int,
+                    grid: dict = None,
+                    fps: int = 10,
                     json_name: str = "yolov7.json",
-                    max_copy: int = -1,
                     random_seed: int = 30000):
     """
     Run grid_augment() which generate multiple json from an original
@@ -142,26 +142,37 @@ def augment_all_vid(input_folder_path: Path,
     Parameters
     ----------
     input_folder_path : Path,
-                path to the folder where the original jsons are located
-    grid : gripParam,
-           storing all needed parameters for augments
+        path to the folder that contains the original jsons
+    grid : dict,
+        storing all needed parameters for augments. Available keys:
+        "noise_amplitude", "horizontal_flip", "vertical_flip",
+        "rotation_y", "rotation_z", "rotation_x", "scale_x", "scale_y".
+        The values of these keys must be arrays. By default
+        DEFAULT_GRID = {
+            "noise_amplitude": np.linspace(1, 4, 2),
+            "horizontal_flip": [True, False],
+            "rotation_y": np.linspace(-20, 20, 3),
+            "rotation_z": np.linspace(-20, 20, 3),
+            "rotation_x": np.linspace(-20, 20, 3),
+            "scale_x": np.linspace(0.8, 1.2, 3),
+            "scale_y": np.linspace(0.8, 1.2, 3),
+        }
     fps : int,
-          pick the fps folder you want to augment for each video
-          (the fps folder must exist)
+        pick the fps folder you want to augment for each video
+        (the fps folder must exist)
     json_name : str,
-                name of the json file in each video folder.
-    max_copy : int,
-               Number of copy of the original file are going to be
-               generated
-    random_seed : value of the random seed to replicated same training data
+        name of the json file in each video folder.
+    random_seed : int,
+        value of the random seed to replicated same training data
     """
-    # random.seed(random_seed)
-    # total_cpy = 0
-    # list_dir = list(input_folder_path.iterdir())
-    # list_dir.remove(input_folder_path / "readme.md")
-    # for path_dir in tqdm(list_dir):
-    #     vid_path = Path(path_dir / _fps_folder_name(fps))
-    #     vid_name = vid_path.glob('**/' + json_name)
-    #     for injson in vid_name:
-    #         total_cpy += grid_augment(injson, grid, max_copy)
-    # print("Generated ",total_cpy, "copies")
+    if grid is None:
+        grid = DEFAULT_GRID
+
+    random.seed(random_seed)
+
+    patern = f"**/{_fps_folder_name(fps)}/{json_name}"
+    nbr_of_videos = _count_files_in_dir(input_folder_path, patern)
+    progress_bar = tqdm(iterable=input_folder_path.glob(patern), total=nbr_of_videos)
+
+    for in_json in tqdm(progress_bar):
+        grid_augment(in_json, grid)
