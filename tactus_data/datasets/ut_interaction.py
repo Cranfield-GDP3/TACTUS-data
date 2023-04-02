@@ -46,6 +46,11 @@ def extract_skeletons(fps: int = 10, device: str = None):
     dataset.extract_skeletons(NAME, dataset.INTERIM_DIR, dataset.PROCESSED_DIR, fps, device)
 
 
+def augment(grid: dict = None, fps: int = 10):
+    """augment all skeletons of ut_interaction"""
+    dataset.augment_all_vid(dataset.PROCESSED_DIR / NAME.name, grid, fps)
+
+
 def download():
     """Download and extract dataset from source"""
     for zip_file_url in DOWNLOAD_URL:
