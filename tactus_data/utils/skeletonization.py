@@ -34,6 +34,7 @@ def yolov7(input_dir: Path, model: Yolov7):
 
     formatted_json["min_nbr_skeletons"] = min_nbr_skeletons
     formatted_json["max_nbr_skeletons"] = max_nbr_skeletons
+    formatted_json["resolution"] = img.shape[:2]
 
     return formatted_json
 
