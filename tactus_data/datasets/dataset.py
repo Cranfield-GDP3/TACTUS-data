@@ -154,7 +154,8 @@ def augment_all_vid(input_folder_path: Path,
     max_copy : int,
                Number of copy of the original file are going to be
                generated
-    random_seed : value of the random seed to replicated same training data
+    random_seed : int,
+                  value of the random seed to replicated same training data
     """
     random.seed(random_seed)
     total_cpy = 0

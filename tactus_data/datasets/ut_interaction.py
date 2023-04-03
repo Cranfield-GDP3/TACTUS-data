@@ -81,7 +81,29 @@ def label_from_video_name(video_name: str) -> str:
 
 def data_split(processed_dir: Path,
                split_strategy: tuple = (80, 10, 10),
-               random_seed: int = 30000):
+               random_seed: int = 30000) -> list:
+    """
+    Randomly split the data between train/val/test following a
+    split_strategy defined in the parameters
+
+    Parameters
+    ----------
+    processed_dir : Path,
+                    Path of the processed directory containing all the
+                    video folder
+    split_strategy : tuple,
+                     % of value for each part of the data between train
+                     validation and test, the sum of the tuple must be
+                     equal to 100
+    random_seed : int,
+                  value of the random seed to replicated same data
+                  split
+
+    Returns
+    -------
+    list[list[Path] :
+        List composed of the list of Path for all video folder on train/validation/test
+    """
     repartition = [[], [], [], []]
     list_dir = sorted(Path(processed_dir).iterdir())
     if Path(processed_dir / "readme.md").exists():
