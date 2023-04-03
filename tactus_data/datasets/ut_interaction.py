@@ -4,6 +4,8 @@ https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 import zipfile
 import io
 import requests
+import random
+from pathlib import Path
 
 from tactus_data.datasets import dataset
 
@@ -75,3 +77,58 @@ def label_from_video_name(video_name: str) -> str:
     label = ACTION_INDEXES[int(action)]
 
     return label
+
+
+def data_split(processed_dir: Path,
+               split_strategy: tuple = (80, 10, 10),
+               random_seed: int = 30000):
+    repartition = [[], [], [], []]
+    list_dir = sorted(Path(processed_dir).iterdir())
+    if Path(processed_dir / "readme.md").exists():
+        list_dir.remove(processed_dir / "readme.md")
+    for i in list_dir:
+        folder_name = i.stem
+        vid_label = label_from_video_name(folder_name)
+        if vid_label == 'kicking':
+            repartition[0].append(i)
+        elif vid_label == 'punching':
+            repartition[1].append(i)
+        elif vid_label == 'pushing':
+            repartition[2].append(i)
+        else:
+            repartition[3].append(i)
+        class_repartition = [len(repartition[0]), len(repartition[1]), len(repartition[2]), len(repartition[3])]
+        # randomize
+    random.seed(random_seed)
+    random.shuffle(repartition[0])
+    random.shuffle(repartition[1])
+    random.shuffle(repartition[2])
+    random.shuffle(repartition[3])
+    # split data
+    split_data = [[], [], []]
+
+    # train
+    for j in range(len(class_repartition)):
+        num = class_repartition[j] * split_strategy[0] // 100
+        current_num = 0
+        while current_num < num:
+            split_data[0].append(repartition[j][current_num])
+            current_num += 1
+    # val
+    for j in range(len(class_repartition)):
+        num = class_repartition[j] * (split_strategy[0] + split_strategy[1]) // 100
+        current_num = class_repartition[j] * split_strategy[0] // 100
+        while current_num < num:
+            split_data[1].append(repartition[j][current_num])
+            current_num += 1
+    # test
+    for j in range(len(class_repartition)):
+        num = class_repartition[j]
+        current_num = class_repartition[j] * (split_strategy[0] + split_strategy[1]) // 100
+        while current_num < num:
+            split_data[2].append(repartition[j][current_num])
+            current_num += 1
+    random.shuffle(split_data[0])
+    random.shuffle(split_data[1])
+    random.shuffle(split_data[2])
+    return split_data
