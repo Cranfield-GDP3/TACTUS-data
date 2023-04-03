@@ -4,6 +4,8 @@ https://cvrc.ece.utexas.edu/SDHA2010/Human_Interaction.html"""
 import zipfile
 import io
 import requests
+import random
+from pathlib import Path
 
 from tactus_data.datasets import dataset
 
@@ -75,3 +77,74 @@ def label_from_video_name(video_name: str) -> str:
     label = ACTION_INDEXES[int(action)]
 
     return label
+
+
+def data_split(ut_interaction_dir: Path,
+               split_strategy: tuple = (80, 10, 10),
+               random_seed: int = 30000) -> list:
+    """
+    Randomly split the data between train/val/test following a
+    split_strategy defined in the parameters
+
+    Parameters
+    ----------
+    ut_interaction_dir : Path,
+        Path of the processed directory containing all the video folder
+    split_strategy : tuple,
+        % of value for each part of the data between train validation
+        and test, the sum of the tuple must be equal to 100
+    random_seed : int,
+        value of the random seed to replicated same data split
+
+    Returns
+    -------
+    list[list[Path] :
+        List composed of the list of Path for all video folder on
+        train/validation/test
+    """
+    repartition = [[], [], [], []]
+    list_dir = sorted(ut_interaction_dir.iterdir())
+    if Path(ut_interaction_dir / "readme.md").exists():
+        list_dir.remove(ut_interaction_dir / "readme.md")
+    for i in list_dir:
+        folder_name = i.stem
+        vid_label = label_from_video_name(folder_name)
+        if vid_label == 'kicking':
+            repartition[0].append(i)
+        elif vid_label == 'punching':
+            repartition[1].append(i)
+        elif vid_label == 'pushing':
+            repartition[2].append(i)
+        else:
+            repartition[3].append(i)
+    class_repartition = [len(repartition[0]), len(repartition[1]), len(repartition[2]), len(repartition[3])]
+    # randomize
+    random.seed(random_seed)
+    random.shuffle(repartition[0])
+    random.shuffle(repartition[1])
+    random.shuffle(repartition[2])
+    random.shuffle(repartition[3])
+    # split data
+    split_data = [[], [], []]
+    # train
+    for j in range(len(class_repartition)):
+        num = class_repartition[j] * split_strategy[0] // 100
+        current_num = 0
+        while current_num < num:
+            split_data[0].append(repartition[j][current_num])
+            current_num += 1
+    # val
+    for j in range(len(class_repartition)):
+        num = class_repartition[j] * (split_strategy[0] + split_strategy[1]) // 100
+        current_num = class_repartition[j] * split_strategy[0] // 100
+        while current_num < num:
+            split_data[1].append(repartition[j][current_num])
+            current_num += 1
+    # test
+    for j in range(len(class_repartition)):
+        num = class_repartition[j]
+        current_num = class_repartition[j] * (split_strategy[0] + split_strategy[1]) // 100
+        while current_num < num:
+            split_data[2].append(repartition[j][current_num])
+            current_num += 1
+    return split_data
