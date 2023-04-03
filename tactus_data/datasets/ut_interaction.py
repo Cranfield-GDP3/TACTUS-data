@@ -104,8 +104,6 @@ def data_split(ut_interaction_dir: Path,
     """
     repartition = [[], [], [], []]
     list_dir = sorted(ut_interaction_dir.iterdir())
-    if Path(ut_interaction_dir / "readme.md").exists():
-        list_dir.remove(ut_interaction_dir / "readme.md")
     for i in list_dir:
         folder_name = i.stem
         vid_label = label_from_video_name(folder_name)
