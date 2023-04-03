@@ -160,7 +160,8 @@ def augment_all_vid(input_folder_path: Path,
     random.seed(random_seed)
     total_cpy = 0
     list_dir = list(input_folder_path.iterdir())
-    list_dir.remove(input_folder_path / "readme.md")
+    if Path(input_folder_path / "readme.md").exists():
+        list_dir.remove(input_folder_path / "readme.md")
     for path_dir in tqdm(list_dir):
         vid_path = Path(path_dir / _fps_folder_name(fps))
         vid_name = vid_path.glob('**/' + json_name)
