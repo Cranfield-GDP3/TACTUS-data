@@ -6,6 +6,7 @@ Usage
 from a yolov7.json
 
 ```python
+from tactus_data import visualisation
 from tactus_data.utils.skeletonization import keypoints_to_xy
 
 with open(path_json) as file:
@@ -35,7 +36,8 @@ for frame in data["frames"]:
 
 Live exportation to numpy array
 ```python
-resolution = (90, 70)
+from tactus_data import visualisation
+video_resolution = (390, 270)
 
 while True:
     skeleton_list = extract_skeleton()
@@ -45,7 +47,7 @@ while True:
         keypoints = keypoints_to_xy(skeleton["keypoints"])
         plot_skeleton_2d(ax, keypoints)
 
-    set_limits(ax, resolution)
+    set_limits(ax, video_resolution)
     np_array = fig_to_numpy(fig)
 ```
 """
@@ -139,7 +141,8 @@ def plot_skeleton_2d(ax: axes.Axes,
 
 def background_image(ax: axes.Axes, img: np.ndarray):
     """
-    add an image in the plot background.
+    add an image in the plot background. You do not need to use
+    set_limits afterwards.
 
     Parameters
     ----------
@@ -153,6 +156,7 @@ def background_image(ax: axes.Axes, img: np.ndarray):
 
 def set_limits(ax: axes.Axes, resolution: tuple[int, int]):
     """
+    You do not need to use set_limits if you added background_image.
     define x axis and y axis limits to avoid auto resize of the canva.
 
     Parameters
