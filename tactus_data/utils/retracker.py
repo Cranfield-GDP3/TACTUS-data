@@ -51,7 +51,8 @@ def deepsort_track_frame(
         the numpy array of the image which the skeletons have been
         extracted from
     skeletons : list[dict]
-        the list of the skeletons for this frame
+        the list of the skeletons for this frame. Each skeleton must
+        have a box key with [left,top,w,h] as a value
 
     Returns
     -------
@@ -91,7 +92,7 @@ def stupid_reid(skeletons_json: dict) -> dict:
         index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
         index_max = max(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
 
-        if len(skeletons)==1:
+        if len(skeletons) == 1:
             skeletons[0]["id_stupid"] = 1
         else:
             skeletons[index_min]["id_stupid"] = 1
