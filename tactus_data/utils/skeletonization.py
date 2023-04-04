@@ -1,6 +1,7 @@
 from pathlib import Path
 from enum import Enum
 from typing import Union
+import numpy as np
 import cv2
 from tactus_yolov7 import Yolov7
 
@@ -26,7 +27,7 @@ def yolov7(input_dir: Path, model: Yolov7):
 
         for i, skeleton in enumerate(skeletons):
             skeletons[i]["keypoints"] = king_of_france(skeletons[i]["keypoints"])
-            skeletons[i]["keypoints"] = round_skeleton_kpts(skeleton["keypoints"])
+            skeletons[i]["keypoints"] = round_keypoints(skeleton["keypoints"])
             skeletons[i]["keypoints"] = remove_confidence_points(skeletons[i]["keypoints"])
 
         frame_json["skeletons"] = skeletons
@@ -39,28 +40,28 @@ def yolov7(input_dir: Path, model: Yolov7):
     return formatted_json
 
 
-def round_values(skeleton: list) -> list:
+def round_list(list_to_round: list) -> list:
     """round all the values of a list. Useful to save a lot of space
     when saving the skeletons to a file"""
-    return [round(kpt) for kpt in skeleton]
+    return [round(value) for value in list_to_round]
 
 
-def round_skeleton_kpts(skeleton: list) -> list:
+def round_keypoints(keypoints: list) -> list:
     """round all the values of a list except every nth index. Useful
     to save a lot of space when saving the skeletons to a file"""
-    for i, kpt in enumerate(skeleton):
+    for i, kpt in enumerate(keypoints):
         # if it still have confidence (beheaded or not)
-        if len(skeleton) in [39, 51]:
+        if len(keypoints) in [39, 51]:
             if i % 3 != 2:
-                skeleton[i] = round(kpt)
+                keypoints[i] = round(kpt)
             else:
-                skeleton[i] = round(kpt, 2)
+                keypoints[i] = round(kpt, 2)
 
         # if it doesn't have confidence (beheaded or not)
-        elif len(skeleton) in [26, 34]:
-            skeleton[i] = round(kpt)
+        elif len(keypoints) in [26, 34]:
+            keypoints[i] = round(kpt)
 
-    return skeleton
+    return keypoints
 
 
 def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
@@ -124,18 +125,20 @@ def king_of_france(keypoints: list) -> list:
         REar_index = 4
         kp_LEar = keypoints[LEar_index*period:LEar_index*(period+1)]
         kp_REar = keypoints[REar_index*period:REar_index*(period+1)]
-        neck_kp = create_middle_keypoint(kp_LEar, kp_REar)
+        neck_kp = middle_keypoint(kp_LEar, kp_REar)
         return neck_kp + keypoints[5*period:]
 
     raise ValueError("The skeleton is already beheaded")
 
 
-def create_middle_keypoint(kp_1: list, kp_2: list):
+def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
     """create a middle keypoint from two keypoint"""
-    new_kp = [0] * len(kp_1)
-
-    for i, _ in enumerate(kp_1):
-        new_kp[i] = (kp_1[i] + kp_2[i]) / 2
+    if isinstance(kp_1, np.ndarray) and isinstance(kp_1, np.ndarray):
+        new_kp = np.mean(np.array(kp_1, kp_2))
+    else:
+        new_kp = [0] * len(kp_1)
+        for i, _ in enumerate(kp_1):
+            new_kp[i] = (kp_1[i] + kp_2[i]) / 2
 
     return new_kp
 
@@ -181,3 +184,86 @@ class BK(Enum):
                  (LShoulder, Neck),
                  (RShoulder, Neck),
                  ]
+
+    LKnee_angle = (LHip, LKnee, LAnkle)
+    RKnee_angle = (RHip, RKnee, RAnkle)
+    LElbow_angle = (LShoulder, LElbow, LWrist)
+    RElbow_angle = (RShoulder, RElbow, RWrist)
+    LShoulder_angle = (RShoulder, LShoulder, LElbow)
+    RShoulder_angle = (LShoulder, RShoulder, RElbow)
+    LHip_angle = (RHip, LHip, LKnee)
+    RHip_angle = (LHip, RHip, RKnee)
+
+
+def get_joint(keypoints: np.ndarray, name: BK):
+    """get x,y coordinates of from a keypoint name"""
+    return keypoints[2 * name: 2 * name + 1]
+
+
+def skeleton_height(keypoints: np.ndarray):
+    """return a skeleton height using the distance from the neck
+    to the ankles"""
+    kp_neck = get_joint(keypoints, BK.Neck)
+
+    kp_l_ankle = get_joint(keypoints, BK.LAnkle)
+    kp_r_ankle = get_joint(keypoints, BK.RAnkle)
+    kp_mid_ankle = middle_keypoint(kp_l_ankle, kp_r_ankle)
+
+    height = np.linalg.norm(kp_neck - kp_mid_ankle)
+    return height
+
+
+def three_points_angle(p1: tuple[float, float], p2: tuple[float, float], p3: tuple[float, float]) -> float:
+    """
+    compute an angle from 3 points.
+
+    Parameters
+    ----------
+    p1 : _type_
+        _description_
+    p2 : _type_
+        _description_
+    p3 : _type_
+        _description_
+
+    Returns
+    -------
+    float
+        angle between (p1, p2) and (p2, p3)
+    """
+    ba = p1 - p2
+    bc = p3 - p2
+
+    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    angle = np.arccos(cosine_angle)
+
+    return np.degrees(angle)
+
+
+def compute_angles(keypoints: list, angle_list: list[tuple[int, int, int]]) -> list[float]:
+    """
+    compute angles between 3 keypoints.
+
+    Parameters
+    ----------
+    angle_list : list[tuple[int, int, int]]
+        List of three-keypoint-indexes to compute angle for.
+        You can use preexisting joints from the BK class. e.g.
+        [LKnee_angle, LElbow_angle, LShoulder_angle, LHip_angle].
+
+    Example
+    -------
+    compute_angles(keypoints, [(BK.LHip, BK.LKnee, BK.LAnkle)])
+    # will compute the 2D angle between (BK.LHip, BK.LKnee) and
+    (BK.LHip, BK.LKnee).
+    """
+    angles = [0] * len(angle_list)
+
+    for i, (name_kp_1, name_kp_2, name_kp_3) in enumerate(angle_list):
+        kp_1 = get_joint(keypoints, name_kp_1)
+        kp_2 = get_joint(keypoints, name_kp_2)
+        kp_3 = get_joint(keypoints, name_kp_3)
+
+        angles[i] = three_points_angle(kp_1, kp_2, kp_3)
+
+    return angles
