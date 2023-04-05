@@ -319,8 +319,12 @@ class RollingWindow:
         velocities = self._add_velocity()
 
         return normalized_keypoints, angles, velocities
-    # for API compatibility
-    add_cur_skeleton = add_skeleton
+
+    def add_cur_skeleton(self, keypoints: list):
+        """for API compatibility"""
+        self.add_skeleton(keypoints)
+
+        return self.get_features()
 
     def _add_keypoints(self, keypoints: list) -> list[float]:
         """add relative keypoints to the rolling window"""
