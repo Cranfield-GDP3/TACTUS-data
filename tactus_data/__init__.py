@@ -3,7 +3,7 @@
 __version__ = "0.0.1"
 
 from tactus_data.datasets import ut_interaction
-from tactus_data.utils.skeletonization import RollingWindow
+from tactus_data.utils.skeletonization import SkeletonRollingWindow
 from tactus_data.utils import skeletonization
 from tactus_data.utils import visualisation
 from tactus_data.utils import data_augment

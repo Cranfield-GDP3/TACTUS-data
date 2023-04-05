@@ -286,7 +286,7 @@ def offset_keypoints(keypoints: np.ndarray):
     return keypoints
 
 
-class RollingWindow:
+class SkeletonRollingWindow:
     def __init__(self, window_size: int):
         self.window_size = window_size
 
@@ -295,12 +295,14 @@ class RollingWindow:
         self.angles_rw = deque(maxlen=window_size)
         self.velocities_rw = deque(maxlen=window_size)
 
-    def add_skeleton(self, keypoints: list, angles_to_compute: list = None):
+    def add_skeleton(self, skeleton: dict, angles_to_compute: list = None):
         """
         add and process a new skeleton to the rolling window.
 
         Parameters
         ----------
+        skeleton : dict
+            a skeleton dictionnary containing at least "keypoints"
         angle_list : list[tuple[int, int, int]]
             List of three-keypoint-indexes to compute angle for. You can use
             preexisting lists from the BK class. e.g. BK.BASIC_ANGLE_LIST or
@@ -314,7 +316,7 @@ class RollingWindow:
             return all the new information computed with the new
             skeleton.
         """
-        normalized_keypoints = self._add_keypoints(keypoints)
+        normalized_keypoints = self._add_keypoints(skeleton["keypoints"])
         angles = self._add_angles(angles_to_compute)
         velocities = self._add_velocity()
 
