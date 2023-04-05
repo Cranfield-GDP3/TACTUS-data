@@ -1,28 +1,25 @@
 import json
 import random
-from itertools import product
+import copy
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import cv2
+from sklearn.model_selection._search import ParameterGrid
 
-from tactus_data.utils.skeletonization import skeleton_bbx
+from tactus_data.utils.skeletonization import skeleton_bbx, round_skeleton_kpts
 
 
-class gridParam:
-    """
-    In grid param, each element are a list of parameters, one parameter
-    can be a list if there are multiple values to test. There is an
-    exception for scaling where you just put all the possibilities you want to do
-    """
-
-    def __init__(self, noise=([1], [4]), translation=([0], [0], [0]),
-                 rotation=([0, 20, -20], [0, 180, 30, -30], [0, 10, -10]),
-                 scaling=([1, 1, 1], [1.1, 1, 1], [0.9, 1, 1], [1, 1.1, 1], [1, 0.9, 1])):
-        self.noise = noise
-        self.translation = translation
-        self.rotation = rotation
-        self.scaling = scaling
+DEFAULT_GRID = {
+    "noise_amplitude": np.linspace(1, 4, 2),
+    "horizontal_flip": [True, False],
+    "rotation_y": np.linspace(-20, 20, 3),
+    "rotation_z": np.linspace(-20, 20, 3),
+    "rotation_x": np.linspace(-20, 20, 3),
+    "scale_x": np.linspace(0.8, 1.2, 3),
+    "scale_y": np.linspace(0.8, 1.2, 3),
+}
 
 
 def _skel_width_height(keypoints: list):
@@ -35,71 +32,97 @@ def _skel_width_height(keypoints: list):
     return xscale, yscale
 
 
-def noise_2d(input_folder_path: Path,
-             json_name: list[str],
-             output_folder_path: Path,
-             num_copy: int = 3,
-             noise_magnitude: float = 4.0):
+def augment_noise_2d(keypoints: list, noise_amplitude: float) -> np.ndarray:
     """
-    Generate 1 json per number of copy asked + the original one. Add
-    randomly add/remove random noise of 1% of the skeleton maximum
-    amplitude to each keypoints coordinates, this 1% max value is
-    multiplied by noise_magnitude
+    add noise to every keypoints of a skeleton
 
     Parameters
     ----------
-    input_folder_path : Path,
-                path of the folder where the original json are located
-    json_name : list[str],
-                a list of json files names that are going to be updated
-                Ex: ["file.json"]
-    output_folder_path : Path,
-                  path of the folder where the new generated json are
-                  saved
-    num_copy : int,
-               number of copy to make with slight rotation until it
-               reaches max_angle
-    noise_magnitude : float,
-                      coefficient the random noise of maximum 1% of
-                      total skeleton amplitude is multiplied by
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    noise_amplitude : float
+        coefficient the random noise of maximum 1% of total skeleton
+        amplitude is multiplied by
+
+    Returns
+    -------
+    np.ndarray
+        list of all the new skeleton keypoints
     """
-    new_json_name = []
-    for file_name in json_name:
-        with open(str(input_folder_path / file_name)) as file:
-            data = json.load(file)
-            num_frame = len(data['frames'])
-        new_json_name.append(file_name)
-        for copy in range(num_copy):
-            noisy_data = data
-            for frame in range(0, num_frame):
-                for skeleton in range(len(noisy_data['frames'][frame]['skeletons'])):
-                    xscale, yscale = _skel_width_height(noisy_data['frames'][frame]['skeletons'][skeleton]["keypoints"])
-                    for point in range(0, len(noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints']), 3):
-                        # not changing face keypoints
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point] += (
-                                noise_magnitude * random.random() * xscale * random.choice([-1, 1]))
-                        noisy_data['frames'][frame]['skeletons'][skeleton]['keypoints'][point + 1] += (
-                                noise_magnitude * random.random() * yscale * random.choice([-1, 1]))
-            new_json_name.append(file_name.strip(".json") + "_N" + str(copy) + ".json")
-            with open(str(output_folder_path / new_json_name[len(new_json_name) - 1]),
-                      'w') as outfile:
-                json.dump(noisy_data, outfile)
-    return new_json_name
+    xscale, yscale = _skel_width_height(keypoints)
+
+    for i in range(0, len(keypoints), 2):
+        keypoints[i] += noise_amplitude * xscale * (random.random() * 2 - 1)
+        keypoints[i + 1] += noise_amplitude * yscale * (random.random() * 2 - 1)
+
+    return keypoints
 
 
-def _get_transform_matrix(resolution: list[int, int],
-                          translation: list,
-                          rotation: list,
-                          scaling: list):
+def augment_transform(keypoints: list, transform_mat: np.ndarray) -> np.ndarray:
+    """
+    transform a skeleton using a transformation matrix
+
+    Parameters
+    ----------
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    transform_mat : np.ndarray
+        _description_
+
+    Returns
+    -------
+    np.ndarray
+        list of all the new skeleton keypoints
+    """
+    keypoints = np.array(keypoints, dtype="float").reshape((1, -1, 2))
+    keypoints = cv2.perspectiveTransform(keypoints, transform_mat)
+    return keypoints.flatten()
+
+
+def transform_matrix_from_grid(
+        resolution: tuple[int, int],
+        transform_dict: dict = None,
+        ) -> np.ndarray:
+    """
+    generate the transformation matrix from a dictionnary
+
+    Parameters
+    ----------
+    resolution : tuple[int, int]
+        resolution of the incoming frame
+    transform_dict : dict, optional
+        dictionnary to create the matrix from, by default None
+
+    Returns
+    -------
+    np.ndarray
+        transformation matrix
+    """
+
+    return get_transform_matrix(resolution,
+                                **transform_dict)
+
+
+def get_transform_matrix(resolution: tuple[int, int],
+                         horizontal_flip: bool = False,
+                         vertical_flip: bool = False,
+                         rotation_x: float = 0,
+                         rotation_y: float = 0,
+                         rotation_z: float = 0,
+                         scale_x: float = 1,
+                         scale_y: float = 1,
+                         **_
+                         ):
     """Create the transform matrix using cartesian dimension"""
     # split input
-    t_x, t_y, t_z = translation
-    r_x, r_y, r_z = rotation
-    s_x, s_y, s_z = scaling
+    h_flip_coef = -1 if horizontal_flip else 1
+    v_flip_coef = -1 if vertical_flip else 1
+    t_x, t_y, t_z = (0, 0, 0)
+    s_x, s_y, s_z = (h_flip_coef * scale_x, v_flip_coef * scale_y, 1)
     # degrees to rad
-    theta_rx = np.deg2rad(r_x)
-    theta_ry = np.deg2rad(r_y)
-    theta_rz = np.deg2rad(r_z)
+    theta_rx = np.deg2rad(rotation_x)
+    theta_ry = np.deg2rad(rotation_y)
+    theta_rz = np.deg2rad(rotation_z)
     # sin and cos
     sin_rx, cos_rx = np.sin(theta_rx), np.cos(theta_rx)
     sin_ry, cos_ry = np.sin(theta_ry), np.cos(theta_ry)
@@ -156,110 +179,70 @@ def _get_transform_matrix(resolution: list[int, int],
     return M_final
 
 
-def _cart_augment(M,
-                  original_keypoints: list):
+def augment_skeleton(keypoints: list,
+                     matrix: np.ndarray,
+                     noise_amplitude: float = 0,
+                     ) -> list:
     """
-    Compute the new keypoints value using the cartesian dimension
-    Matrix
-    """
-    keypoints = []
-    for i in range(0, len(original_keypoints) - 1, 3):
-        keypoints.append([original_keypoints[i], original_keypoints[i + 1]])
-    keypoints = np.array([keypoints], dtype="float")
-    keypoints = cv2.perspectiveTransform(keypoints, M)
-    for i in range(0, len(keypoints[0])):
-        original_keypoints[3 * i] = keypoints[0][i][0].tolist()
-        original_keypoints[3 * i + 1] = keypoints[0][i][1].tolist()
-    return original_keypoints
-
-
-def multiaugment(input_folder_path: Path,
-                 json_name: list[str],
-                 output_folder_path: Path,
-                 translation: list,
-                 rotation: list,
-                 scaling: list):
-    """
-    input_folder_path : Path,
-                path of the folder where the original json are located
-    json_name : list[str],
-                a list of json files names that are going to be updated
-                Ex: ["file.json"]
-    output_folder_path : Path,
-                  path of the folder where the new generated json are
-                  saved
-    translation : list,
-                  list of the parameters for translation matrix
-                  [tx, ty, tz]
-    rotation : list,
-               list of the parameters for rotation matrix [rx, ry, rz]
-    scaling : list,
-              list of the parameters for the scaling matrix
-              [sx, sy, sz]
-    """
-    new_json_name = []
-    for file_name in json_name:
-        with open(str(input_folder_path / file_name)) as file:
-            data = json.load(file)
-            resolution = data["resolution"]
-            num_frame = len(data['frames'])
-        new_data = data
-        for frame in range(0, num_frame):
-            for skeleton in range(len(new_data['frames'][frame]['skeletons'])):
-                new_data['frames'][frame]['skeletons'][skeleton]["keypoints"] = (
-                    _cart_augment(_get_transform_matrix(resolution, translation, rotation, scaling),
-                                  new_data['frames'][frame]['skeletons'][skeleton]["keypoints"]))
-        new_json_name.append(file_name)
-        with open(str(output_folder_path / file_name),
-                  'w') as outfile:
-            json.dump(new_data, outfile)
-    return new_json_name
-
-
-def grid_augment(path_json: Path,
-                 grid: gridParam,
-                 max_copy: int = -1):
-    """
-    Generate multiple json from an original json with different types
-    of augments like translation, rotation, scaling on all 3 axis.
+    augment a single skeleton
 
     Parameters
     ----------
-    path_json : Path,
-                path where the original json file is located
-    grid : gridParam,
-           storing all needed parameters for augments
-    max_copy : int,
-               Maximum copy of an original file that can be
-               generated
+    keypoints : list
+        list of all the skeleton keypoints with only x and y coordinates
+    matrix : np.ndarray
+        transformation matrix of size (3*3)
+    noise_amplitude : float, optional
+        the noise amplitude, by default 0
+
+    Returns
+    -------
+    list
+        the augmented skeleton
     """
-    parent_folder = path_json.parent
-    choice_rotation = list(product(grid.rotation[0], grid.rotation[1], grid.rotation[2]))
-    choice_translation = list(product(grid.translation[0], grid.translation[1], grid.translation[2]))
-    choice_scaling = grid.scaling
-    choice_noise = list(product(grid.noise[0], grid.noise[1]))
-    generator = product(choice_translation, choice_rotation, choice_scaling, choice_noise)
-    next(generator)  # don't look at original value
-    generated_pic = 0
-    counter = 1
-    if max_copy == -1:
-        flag_limit = False
-    else:
-        flag_limit = True
-    with open(path_json) as file:
-        original_data = json.load(file)
-    for indices in generator:
-        if flag_limit and generated_pic >= max_copy:
-            print("Max copy overflow")
-            break
-        else:
-            # create copy json with final name
-            new_name = path_json.stem + "_augment_" + str(counter) + ".json"
-            with open(str(parent_folder / new_name), 'w') as outfile:
-                json.dump(original_data, outfile)
-            result_multiaugment = multiaugment(parent_folder, [new_name], parent_folder, indices[0], indices[1],
-                                               indices[2])
-            result_noise = noise_2d(parent_folder, result_multiaugment, parent_folder, indices[3][0], indices[3][1])
-            generated_pic += len(result_noise)
-            counter += 1
-    return generated_pic
+    keypoints = augment_transform(keypoints, matrix)
+    keypoints = augment_noise_2d(keypoints, noise_amplitude)
+    keypoints = round_skeleton_kpts(keypoints)
+
+    return keypoints.tolist()
+
+
+def grid_augment(formatted_json: Path,
+                 grid: Union[dict[str, list], list[dict[str, list]]]):
+    """
+    augment a JSON with a grid of parameters. The result files
+    are going to be written in the same folder as the original
+    file.
+
+    Parameters
+    ----------
+    formatted_json : Path
+        the path to the JSON that is going to be augmented
+    grid : dict[str, list] | list[dict[str, list]]
+        The parameter grid to explore, as a dictionary mapping estimator
+        parameters to sequences of allowed values.
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
+    """
+    original_data = json.load(formatted_json.open())
+    original_stem = formatted_json.stem
+
+    for i, params in enumerate(ParameterGrid(grid)):
+        matrix = transform_matrix_from_grid(original_data["resolution"], params)
+
+        noise_amplitude = 0
+        if "noise_amplitude" in params:
+            noise_amplitude = params["noise_amplitude"]
+
+        augmented_json = copy.deepcopy(original_data)
+        for frame in augmented_json["frames"]:
+            for skeleton in frame["skeletons"]:
+                skeleton["keypoints"] = augment_skeleton(skeleton["keypoints"],
+                                                         matrix,
+                                                         noise_amplitude)
+
+        augmented_json["augmentation"] = params
+
+        new_filename = formatted_json.with_stem(f"{original_stem}_augment_{i}")
+        json.dump(augmented_json, new_filename.open(mode="w"))
