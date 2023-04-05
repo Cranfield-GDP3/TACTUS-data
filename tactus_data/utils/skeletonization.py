@@ -4,6 +4,7 @@ from typing import Union
 import numpy as np
 import cv2
 from tactus_yolov7 import Yolov7
+from collections import deque
 
 MODEL_WEIGHTS_PATH = Path("data/raw/model/yolov7-w6-pose.pt")
 
@@ -194,6 +195,13 @@ class BK(Enum):
     LHip_angle = (RHip, LHip, LKnee)
     RHip_angle = (LHip, RHip, RKnee)
 
+    BASIC_ANGLE_LIST = [LKnee_angle, RKnee_angle,
+                        LElbow_angle, RElbow_angle]
+    MEDIUM_ANGLE_LIST = [LKnee_angle, RKnee_angle,
+                         LElbow_angle, RElbow_angle,
+                         LShoulder_angle, RShoulder_angle,
+                         LHip_angle, RHip_angle]
+
 
 def get_joint(keypoints: np.ndarray, name: BK):
     """get x,y coordinates of from a keypoint name"""
@@ -247,9 +255,10 @@ def compute_angles(keypoints: list, angle_list: list[tuple[int, int, int]]) -> l
     Parameters
     ----------
     angle_list : list[tuple[int, int, int]]
-        List of three-keypoint-indexes to compute angle for.
-        You can use preexisting joints from the BK class. e.g.
-        [LKnee_angle, LElbow_angle, LShoulder_angle, LHip_angle].
+        List of three-keypoint-indexes to compute angle for. You can use
+        preexisting lists from the BK class. e.g. BK.BASIC_ANGLE_LIST or
+        BK.MEDIUM_ANGLE_LIST. You can also use joints from the BK class
+        e.g. [LKnee_angle, LElbow_angle, LShoulder_angle, LHip_angle].
 
     Example
     -------
@@ -267,3 +276,122 @@ def compute_angles(keypoints: list, angle_list: list[tuple[int, int, int]]) -> l
         angles[i] = three_points_angle(kp_1, kp_2, kp_3)
 
     return angles
+
+
+def offset_keypoints(keypoints: np.ndarray):
+    x_offset, y_offset = get_joint(keypoints, BK.Neck)
+    keypoints[0::2] = keypoints[0::2] - x_offset
+    keypoints[1::2] = keypoints[1::2] - y_offset
+
+    return keypoints
+
+
+class RollingWindow:
+    def __init__(self, window_size: int):
+        self.window_size = window_size
+
+        self.keypoints_rw = deque(maxlen=window_size)
+        self.height_rw = deque(maxlen=window_size)
+        self.angles_rw = deque(maxlen=window_size)
+        self.velocities_rw = deque(maxlen=window_size)
+
+    def add_skeleton(self, keypoints: list, angles_to_compute: list = None):
+        """
+        add and process a new skeleton to the rolling window.
+
+        Parameters
+        ----------
+        angle_list : list[tuple[int, int, int]]
+            List of three-keypoint-indexes to compute angle for. You can use
+            preexisting lists from the BK class. e.g. BK.BASIC_ANGLE_LIST or
+            BK.MEDIUM_ANGLE_LIST. You can also use joints from the BK class
+            e.g. [LKnee_angle, LElbow_angle, LShoulder_angle, LHip_angle].
+
+        Returns
+        -------
+        (normalized_keypoints, angles, velocities) : tuple[np.ndarray,
+        np.ndarray, np.ndarray]
+            return all the new information computed with the new
+            skeleton.
+        """
+        normalized_keypoints = self._add_keypoints(keypoints)
+        angles = self._add_angles(angles_to_compute)
+        velocities = self._add_velocity()
+
+        return normalized_keypoints, angles, velocities
+    # for API compatibility
+    add_cur_skeleton = add_skeleton
+
+    def _add_keypoints(self, keypoints: list) -> list[float]:
+        """add relative keypoints to the rolling window"""
+        relative_keypoints = offset_keypoints(keypoints)
+
+        self._add_height(keypoints)
+        mean_height = self.get_mean_height()
+
+        normalized_keypoints = relative_keypoints / mean_height
+        self.keypoints_rw.append(normalized_keypoints)
+
+        return normalized_keypoints
+
+    def _add_height(self, keypoints: list) -> float:
+        """add the height over the rolling window"""
+        height = skeleton_height(keypoints)
+        self.height_rw.append(height)
+
+        return height
+
+    def _add_angles(self, angles_to_compute: list = None) -> list[float]:
+        """add specified angles to the rolling window. See add_skeleton()
+        for information about angles_to_compute"""
+        if angles_to_compute is None:
+            angles_to_compute = BK.BASIC_ANGLE_LIST
+        angles = compute_angles(self.keypoints_rw[-1], angles_to_compute)
+
+        self.angles_rw.append(angles)
+
+        return angles
+
+    def _add_velocity(self) -> list[float]:
+        """add keypoints velocity to the rolling window"""
+        velocity = np.zeros(len(self.keypoints_rw[0]))
+
+        if len(self.velocities_rw) > 1:
+            velocity = self.keypoints_rw[-1] - self.keypoints_rw[-2]
+
+        self.velocities_rw.append(velocity)
+
+        return velocity
+
+    def get_features(self) -> tuple[bool, np.ndarray]:
+        """
+        return the keypoints, angles and velocities for a skeleton
+        only if the window is full
+
+        Returns
+        -------
+        (success, features) : bool, np.ndarray
+            return the success and the features as an numpy array. if
+            the window is not full, returns (False, None)
+        """
+        if len(self.keypoints_rw) == self.window_size:
+            poses = self.get_poses_flatten()
+            angles = self.get_angles_flatten()
+            velocities = self.get_velocities_flatten()
+
+            features = np.concatenate(poses, angles, velocities)
+            return True, features
+
+        return False, None
+
+    def get_poses_flatten(self):
+        return np.array(self.keypoints_rw).flatten()
+
+    def get_angles_flatten(self):
+        return np.array(self.angles_rw).flatten()
+
+    def get_velocities_flatten(self):
+        return np.array(self.angles_rw).flatten()
+
+    def get_mean_height(self):
+        return np.mean(self.height_rw)
