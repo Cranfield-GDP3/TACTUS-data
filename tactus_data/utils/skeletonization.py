@@ -1,10 +1,10 @@
 from pathlib import Path
 from enum import Enum
 from typing import Union
+from collections import deque
 import numpy as np
 import cv2
 from tactus_yolov7 import Yolov7
-from collections import deque
 
 MODEL_WEIGHTS_PATH = Path("data/raw/model/yolov7-w6-pose.pt")
 
@@ -112,7 +112,7 @@ def skeleton_bbx(keypoints: Union[list, tuple]) -> tuple[int, int, int, int]:
     min_y = min(keypoints_y)
     max_y = max(keypoints_y)
 
-    return min_x, min_y, max_x-min_x, max_y-min_y
+    return min_x, min_y, (max_x - min_x), (max_y - min_y)
 
 
 def king_of_france(keypoints: list) -> list:
