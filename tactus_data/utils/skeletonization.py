@@ -27,9 +27,11 @@ def yolov7(input_dir: Path, model: Yolov7):
         max_nbr_skeletons = max(max_nbr_skeletons, len(skeletons))
 
         for i, skeleton in enumerate(skeletons):
-            skeletons[i]["keypoints"] = king_of_france(skeletons[i]["keypoints"])
-            skeletons[i]["keypoints"] = round_keypoints(skeleton["keypoints"])
-            skeletons[i]["keypoints"] = remove_confidence_points(skeletons[i]["keypoints"])
+            keypoints = skeleton["keypoints"]
+            keypoints = king_of_france(keypoints)
+            keypoints = round_keypoints(keypoints)
+            keypoints = remove_confidence_points(keypoints)
+            skeletons[i]["keypoints"] = keypoints
 
         frame_json["skeletons"] = skeletons
         formatted_json["frames"].append(frame_json)
@@ -124,10 +126,10 @@ def king_of_france(keypoints: list) -> list:
     if period is not None:
         LEar_index = 3
         REar_index = 4
-        kp_LEar = keypoints[LEar_index*period:LEar_index*(period+1)]
-        kp_REar = keypoints[REar_index*period:REar_index*(period+1)]
+        kp_LEar = keypoints[LEar_index * period:(LEar_index + 1) * period]
+        kp_REar = keypoints[REar_index * period:(REar_index + 1) * period]
         neck_kp = middle_keypoint(kp_LEar, kp_REar)
-        return neck_kp + keypoints[5*period:]
+        return neck_kp + keypoints[5 * period:]
 
     raise ValueError("The skeleton is already beheaded")
 
@@ -135,7 +137,7 @@ def king_of_france(keypoints: list) -> list:
 def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
     """create a middle keypoint from two keypoint"""
     if isinstance(kp_1, np.ndarray) and isinstance(kp_1, np.ndarray):
-        new_kp = np.mean(np.array(kp_1, kp_2))
+        new_kp = np.mean([kp_1, kp_2], axis=0)
     else:
         new_kp = [0] * len(kp_1)
         for i, _ in enumerate(kp_1):
@@ -203,9 +205,12 @@ class BK(Enum):
                          LHip_angle, RHip_angle]
 
 
-def get_joint(keypoints: np.ndarray, name: BK):
+def get_joint(keypoints: np.ndarray, kp_name: Union[BK, int]):
     """get x,y coordinates of from a keypoint name"""
-    return keypoints[2 * name: 2 * name + 1]
+    if isinstance(kp_name, BK):
+        kp_name = kp_name.value
+
+    return keypoints[2 * kp_name: 2 * kp_name + 2]
 
 
 def skeleton_height(keypoints: np.ndarray):
@@ -291,7 +296,10 @@ class SkeletonRollingWindow:
         self.window_size = window_size
 
         if angles_to_compute is None:
-            angles_to_compute = BK.BASIC_ANGLE_LIST
+            angles_to_compute = BK.BASIC_ANGLE_LIST.value
+        if isinstance(angles_to_compute, BK):
+            angles_to_compute = angles_to_compute.value
+        self.angles_to_compute = angles_to_compute
 
         self.keypoints_rw = deque(maxlen=window_size)
         self.height_rw = deque(maxlen=window_size)
@@ -306,11 +314,6 @@ class SkeletonRollingWindow:
         ----------
         skeleton : dict
             a skeleton dictionnary containing at least "keypoints"
-        angle_list : list[tuple[int, int, int]]
-            List of three-keypoint-indexes to compute angle for. You can use
-            preexisting lists from the BK class. e.g. BK.BASIC_ANGLE_LIST or
-            BK.MEDIUM_ANGLE_LIST. You can also use joints from the BK class
-            e.g. [LKnee_angle, LElbow_angle, LShoulder_angle, LHip_angle].
 
         Returns
         -------
@@ -319,7 +322,12 @@ class SkeletonRollingWindow:
             return all the new information computed with the new
             skeleton.
         """
-        normalized_keypoints = self._add_keypoints(skeleton["keypoints"])
+        keypoints = king_of_france(skeleton["keypoints"])
+        keypoints = round_keypoints(keypoints)
+        keypoints = remove_confidence_points(keypoints)
+        keypoints = np.array(keypoints)
+
+        normalized_keypoints = self._add_keypoints(keypoints)
         angles = self._add_angles()
         velocities = self._add_velocity()
 
@@ -385,8 +393,11 @@ class SkeletonRollingWindow:
             poses = self.get_poses_flatten()
             angles = self.get_angles_flatten()
             velocities = self.get_velocities_flatten()
+            print(poses)
+            print(angles)
+            print(velocities)
 
-            features = np.concatenate(poses, angles, velocities)
+            features = np.concatenate((poses, angles, velocities))
             return True, features
 
         return False, None
@@ -398,7 +409,7 @@ class SkeletonRollingWindow:
         return np.array(self.angles_rw).flatten()
 
     def get_velocities_flatten(self):
-        return np.array(self.angles_rw).flatten()
+        return np.array(self.velocities_rw).flatten()
 
     def get_mean_height(self):
         return np.mean(self.height_rw)
