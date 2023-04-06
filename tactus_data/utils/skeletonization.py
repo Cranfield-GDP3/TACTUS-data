@@ -287,15 +287,18 @@ def offset_keypoints(keypoints: np.ndarray):
 
 
 class SkeletonRollingWindow:
-    def __init__(self, window_size: int):
+    def __init__(self, window_size: int, angles_to_compute: list = None):
         self.window_size = window_size
+
+        if angles_to_compute is None:
+            angles_to_compute = BK.BASIC_ANGLE_LIST
 
         self.keypoints_rw = deque(maxlen=window_size)
         self.height_rw = deque(maxlen=window_size)
         self.angles_rw = deque(maxlen=window_size)
         self.velocities_rw = deque(maxlen=window_size)
 
-    def add_skeleton(self, skeleton: dict, angles_to_compute: list = None):
+    def add_skeleton(self, skeleton: dict):
         """
         add and process a new skeleton to the rolling window.
 
@@ -317,7 +320,7 @@ class SkeletonRollingWindow:
             skeleton.
         """
         normalized_keypoints = self._add_keypoints(skeleton["keypoints"])
-        angles = self._add_angles(angles_to_compute)
+        angles = self._add_angles()
         velocities = self._add_velocity()
 
         return normalized_keypoints, angles, velocities
@@ -347,12 +350,10 @@ class SkeletonRollingWindow:
 
         return height
 
-    def _add_angles(self, angles_to_compute: list = None) -> list[float]:
+    def _add_angles(self) -> list[float]:
         """add specified angles to the rolling window. See add_skeleton()
         for information about angles_to_compute"""
-        if angles_to_compute is None:
-            angles_to_compute = BK.BASIC_ANGLE_LIST
-        angles = compute_angles(self.keypoints_rw[-1], angles_to_compute)
+        angles = compute_angles(self.keypoints_rw[-1], self.angles_to_compute)
 
         self.angles_rw.append(angles)
 

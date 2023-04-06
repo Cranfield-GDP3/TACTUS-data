@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 from sklearn.model_selection._search import ParameterGrid
 
-from tactus_data.utils.skeletonization import skeleton_bbx, round_skeleton_kpts
+from tactus_data.utils.skeletonization import skeleton_bbx, round_keypoints
 
 
 DEFAULT_GRID = {
@@ -202,7 +202,7 @@ def augment_skeleton(keypoints: list,
     """
     keypoints = augment_transform(keypoints, matrix)
     keypoints = augment_noise_2d(keypoints, noise_amplitude)
-    keypoints = round_skeleton_kpts(keypoints)
+    keypoints = round_keypoints(keypoints)
 
     return keypoints.tolist()
 
