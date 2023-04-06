@@ -244,6 +244,9 @@ def three_points_angle(p1: tuple[float, float], p2: tuple[float, float], p3: tup
     float
         angle between (p1, p2) and (p2, p3)
     """
+    if np.allclose(p1, p2) or np.allclose(p2, p3) or np.allclose(p1, p3):
+        return 0
+
     ba = p1 - p2
     bc = p3 - p2
 
