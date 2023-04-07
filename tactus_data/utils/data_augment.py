@@ -2,13 +2,13 @@ import json
 import random
 import copy
 from pathlib import Path
-from typing import Union
+from typing import Union, Generator
 
 import numpy as np
 import cv2
 from sklearn.model_selection._search import ParameterGrid
 
-from tactus_data.utils.skeletonization import skeleton_bbx, round_skeleton_kpts
+from tactus_data.utils.skeletonization import skeleton_bbx, round_keypoints
 
 
 DEFAULT_GRID = {
@@ -202,7 +202,7 @@ def augment_skeleton(keypoints: list,
     """
     keypoints = augment_transform(keypoints, matrix)
     keypoints = augment_noise_2d(keypoints, noise_amplitude)
-    keypoints = round_skeleton_kpts(keypoints)
+    keypoints = round_keypoints(keypoints)
 
     return keypoints.tolist()
 
@@ -228,14 +228,43 @@ def grid_augment(formatted_json: Path,
     original_data = json.load(formatted_json.open())
     original_stem = formatted_json.stem
 
-    for i, params in enumerate(ParameterGrid(grid)):
-        matrix = transform_matrix_from_grid(original_data["resolution"], params)
+    for i, augmented_json in enumerate(grid_augment_generator(original_data, grid)):
+        new_filename = formatted_json.with_stem(f"{original_stem}_augment_{i}")
+        json.dump(augmented_json, new_filename.open(mode="w"))
+
+
+def grid_augment_generator(
+        formatted_json: dict,
+        grid: Union[dict[str, list], list[dict[str, list]]]
+        ) -> Generator[dict, None, None]:
+    """
+    augment a JSON with a grid of parameters. The result dictionnaries
+    are yielded.
+
+    Parameters
+    ----------
+    formatted_json : dict
+        a dict that contains `resolution` and `frames`
+    grid : dict[str, list] | list[dict[str, list]]
+        The parameter grid to explore, as a dictionary mapping estimator
+        parameters to sequences of allowed values.
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
+
+    Yields
+    ------
+    dict
+        the new augmented dict.
+    """
+    for params in ParameterGrid(grid):
+        matrix = transform_matrix_from_grid(formatted_json["resolution"], params)
 
         noise_amplitude = 0
         if "noise_amplitude" in params:
             noise_amplitude = params["noise_amplitude"]
 
-        augmented_json = copy.deepcopy(original_data)
+        augmented_json = copy.deepcopy(formatted_json)
         for frame in augmented_json["frames"]:
             for skeleton in frame["skeletons"]:
                 skeleton["keypoints"] = augment_skeleton(skeleton["keypoints"],
@@ -244,5 +273,4 @@ def grid_augment(formatted_json: Path,
 
         augmented_json["augmentation"] = params
 
-        new_filename = formatted_json.with_stem(f"{original_stem}_augment_{i}")
-        json.dump(augmented_json, new_filename.open(mode="w"))
+        yield augmented_json

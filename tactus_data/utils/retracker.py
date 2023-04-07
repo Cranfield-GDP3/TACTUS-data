@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Union
 import numpy as np
 from deep_sort_realtime.deepsort_tracker import DeepSort
+from deep_sort_realtime.deep_sort.track import Track
 from PIL import Image
 
 
@@ -38,8 +39,9 @@ def deepsort(images_dir: Path, skeletons_json: dict):
 def deepsort_track_frame(
         tracker: DeepSort,
         frame: np.ndarray,
-        skeletons: list[dict]
-    ) -> Union[np.ndarray, bool]:
+        skeletons: list[dict],
+        new_version: bool = False,
+    ) -> Union[list[Track], list[int], bool]:
     """
     update the tracker for one frame.
 
@@ -51,7 +53,8 @@ def deepsort_track_frame(
         the numpy array of the image which the skeletons have been
         extracted from
     skeletons : list[dict]
-        the list of the skeletons for this frame
+        the list of the skeletons for this frame. Each skeleton must
+        have a box key with [left,top,w,h] as a value
 
     Returns
     -------
@@ -63,21 +66,25 @@ def deepsort_track_frame(
     for skeleton in skeletons:
         bbs.append((skeleton["box"], 1, "1", None))
 
+    tracks: list[Track]
     tracks = tracker.update_tracks(bbs, frame=frame)
 
-    at_least_one_tracked = False
-    track_ids = []
-    for track in tracks:
-        if not track.is_confirmed():
-            continue
+    if new_version:
+        return tracks
+    else:
+        at_least_one_tracked = False
+        track_ids = []
+        for track in tracks:
+            if not track.is_confirmed():
+                continue
 
-        at_least_one_tracked = True
-        track_ids.append(int(track.track_id))
+            at_least_one_tracked = True
+            track_ids.append(int(track.track_id))
 
-    if not at_least_one_tracked:
-        return False
+        if not at_least_one_tracked:
+            return False
 
-    return track_ids
+        return track_ids
 
 
 def stupid_reid(skeletons_json: dict) -> dict:
@@ -91,7 +98,7 @@ def stupid_reid(skeletons_json: dict) -> dict:
         index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
         index_max = max(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
 
-        if len(skeletons)==1:
+        if len(skeletons) == 1:
             skeletons[0]["id_stupid"] = 1
         else:
             skeletons[index_min]["id_stupid"] = 1
