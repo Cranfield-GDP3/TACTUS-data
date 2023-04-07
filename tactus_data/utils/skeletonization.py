@@ -309,7 +309,7 @@ class SkeletonRollingWindow:
         self.angles_rw = deque(maxlen=window_size)
         self.velocities_rw = deque(maxlen=window_size)
 
-    def add_skeleton(self, skeleton: dict):
+    def add_skeleton(self, skeleton: dict, has_head: bool = True, has_confidence: bool = True):
         """
         add and process a new skeleton to the rolling window.
 
@@ -325,9 +325,11 @@ class SkeletonRollingWindow:
             return all the new information computed with the new
             skeleton.
         """
-        keypoints = king_of_france(skeleton["keypoints"])
-        keypoints = round_keypoints(keypoints)
-        keypoints = remove_confidence_points(keypoints)
+        keypoints = skeleton["keypoints"]
+        if has_head:
+            keypoints = king_of_france(skeleton["keypoints"])
+        if has_confidence:
+            keypoints = remove_confidence_points(keypoints)
         keypoints = np.array(keypoints)
 
         normalized_keypoints = self._add_keypoints(keypoints)
@@ -396,9 +398,6 @@ class SkeletonRollingWindow:
             poses = self.get_poses_flatten()
             angles = self.get_angles_flatten()
             velocities = self.get_velocities_flatten()
-            print(poses)
-            print(angles)
-            print(velocities)
 
             features = np.concatenate((poses, angles, velocities))
             return True, features
