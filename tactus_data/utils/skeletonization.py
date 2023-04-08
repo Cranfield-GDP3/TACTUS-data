@@ -1,4 +1,5 @@
 import math
+from typing import List, Tuple
 from pathlib import Path
 from enum import Enum
 from typing import Union
@@ -68,7 +69,7 @@ def round_keypoints(keypoints: list) -> list:
     return keypoints
 
 
-def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
+def keypoints_to_xy(keypoints: Union[list, tuple]) -> Tuple[list, list]:
     """
     return a tuple of x and y coordinates
 
@@ -90,7 +91,7 @@ def keypoints_to_xy(keypoints: Union[list, tuple]) -> tuple[list, list]:
     return keypoints
 
 
-def skeleton_bbx(keypoints: Union[list, tuple]) -> tuple[int, int, int, int]:
+def skeleton_bbx(keypoints: Union[list, tuple]) -> Tuple[int, int, int, int]:
     """
     return the x_left, y_bottom, width and height of a skeleton
 
@@ -227,7 +228,7 @@ def skeleton_height(keypoints: np.ndarray):
     return height
 
 
-def three_points_angle(p1: tuple[float, float], p2: tuple[float, float], p3: tuple[float, float]) -> float:
+def three_points_angle(p1: Tuple[float, float], p2: Tuple[float, float], p3: Tuple[float, float]) -> float:
     """
     compute an angle from 3 points.
 
@@ -264,7 +265,7 @@ def three_points_angle(p1: tuple[float, float], p2: tuple[float, float], p3: tup
     return np.degrees(angle)
 
 
-def compute_angles(keypoints: list, angle_list: list[tuple[int, int, int]]) -> list[float]:
+def compute_angles(keypoints: list, angle_list: List[Tuple[int, int, int]]) -> List[float]:
     """
     compute angles between 3 keypoints.
 
@@ -352,7 +353,7 @@ class SkeletonRollingWindow:
 
         return self.get_features()
 
-    def _add_keypoints(self, keypoints: list) -> list[float]:
+    def _add_keypoints(self, keypoints: list) -> List[float]:
         """add relative keypoints to the rolling window"""
         relative_keypoints = offset_keypoints(keypoints)
 
@@ -371,7 +372,7 @@ class SkeletonRollingWindow:
 
         return height
 
-    def _add_angles(self) -> list[float]:
+    def _add_angles(self) -> List[float]:
         """add specified angles to the rolling window. See add_skeleton()
         for information about angles_to_compute"""
         angles = compute_angles(self.keypoints_rw[-1], self.angles_to_compute)
@@ -380,7 +381,7 @@ class SkeletonRollingWindow:
 
         return angles
 
-    def _add_velocity(self) -> list[float]:
+    def _add_velocity(self) -> List[float]:
         """add keypoints velocity to the rolling window"""
         velocity = np.zeros(len(self.keypoints_rw[0]))
 
@@ -391,7 +392,7 @@ class SkeletonRollingWindow:
 
         return velocity
 
-    def get_features(self) -> tuple[bool, np.ndarray]:
+    def get_features(self) -> Tuple[bool, np.ndarray]:
         """
         return the keypoints, angles and velocities for a skeleton
         only if the window is full

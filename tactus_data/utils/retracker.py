@@ -4,6 +4,7 @@ import numpy as np
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from deep_sort_realtime.deep_sort.track import Track
 from PIL import Image
+from typing import List
 
 
 def deepsort(images_dir: Path, skeletons_json: dict):
@@ -39,9 +40,9 @@ def deepsort(images_dir: Path, skeletons_json: dict):
 def deepsort_track_frame(
         tracker: DeepSort,
         frame: np.ndarray,
-        skeletons: list[dict],
+        skeletons: List[dict],
         new_version: bool = False,
-    ) -> Union[list[Track], list[int], bool]:
+    ) -> Union[List[Track], List[int], bool]:
     """
     update the tracker for one frame.
 

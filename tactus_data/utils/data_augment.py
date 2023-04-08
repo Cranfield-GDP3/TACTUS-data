@@ -1,6 +1,7 @@
 import json
 import random
 import copy
+from typing import List, Tuple, Dict
 from pathlib import Path
 from typing import Union, Generator
 
@@ -80,7 +81,7 @@ def augment_transform(keypoints: list, transform_mat: np.ndarray) -> np.ndarray:
 
 
 def transform_matrix_from_grid(
-        resolution: tuple[int, int],
+        resolution: Tuple[int, int],
         transform_dict: dict = None,
         ) -> np.ndarray:
     """
@@ -103,7 +104,7 @@ def transform_matrix_from_grid(
                                 **transform_dict)
 
 
-def get_transform_matrix(resolution: tuple[int, int],
+def get_transform_matrix(resolution: Tuple[int, int],
                          horizontal_flip: bool = False,
                          vertical_flip: bool = False,
                          rotation_x: float = 0,
@@ -208,7 +209,7 @@ def augment_skeleton(keypoints: list,
 
 
 def grid_augment(formatted_json: Path,
-                 grid: Union[dict[str, list], list[dict[str, list]]]):
+                 grid: Union[Dict[str, list], List[Dict[str, list]]]):
     """
     augment a JSON with a grid of parameters. The result files
     are going to be written in the same folder as the original
@@ -227,15 +228,18 @@ def grid_augment(formatted_json: Path,
     """
     original_data = json.load(formatted_json.open())
     original_stem = formatted_json.stem
+    suffix = formatted_json.suffix
 
     for i, augmented_json in enumerate(grid_augment_generator(original_data, grid)):
-        new_filename = formatted_json.with_stem(f"{original_stem}_augment_{i}")
+
+        new_stem = f"{original_stem}_augment_{i}"
+        new_filename = formatted_json.with_name(f'{new_stem}{suffix}')
         json.dump(augmented_json, new_filename.open(mode="w"))
 
 
 def grid_augment_generator(
         formatted_json: dict,
-        grid: Union[dict[str, list], list[dict[str, list]]]
+        grid: Union[Dict[str, list], List[Dict[str, list]]]
         ) -> Generator[dict, None, None]:
     """
     augment a JSON with a grid of parameters. The result dictionnaries

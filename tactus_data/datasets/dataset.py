@@ -1,3 +1,4 @@
+from typing import List
 from pathlib import Path
 from enum import Enum
 import random
@@ -110,7 +111,7 @@ def _fps_folder_name(fps: int):
     return f"{fps}fps"
 
 
-def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: list[str]):
+def _delete_skeletons_keys(formatted_json: dict, keys_to_remove: List[str]):
     """remove every keys specified from the skeleton dictionnary"""
     for frame in formatted_json["frames"]:
         for skeleton in frame["skeletons"]:

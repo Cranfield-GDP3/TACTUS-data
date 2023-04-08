@@ -52,7 +52,7 @@ while True:
 ```
 """
 
-from typing import Union
+from typing import Union, Tuple
 import io
 
 from matplotlib import pyplot as plt
@@ -154,7 +154,7 @@ def background_image(ax: axes.Axes, img: np.ndarray):
     ax.imshow(img)
 
 
-def set_limits(ax: axes.Axes, resolution: tuple[int, int]):
+def set_limits(ax: axes.Axes, resolution: Tuple[int, int]):
     """
     You do not need to use set_limits if you added background_image.
     define x axis and y axis limits to avoid auto resize of the canva.
