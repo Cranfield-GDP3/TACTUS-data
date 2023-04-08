@@ -252,15 +252,8 @@ def three_points_angle(p1: Tuple[float, float], p2: Tuple[float, float], p3: Tup
     ba = p1 - p2
     bc = p3 - p2
 
-    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    cosine_angle = (np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))).astype(np.float16)
     angle = np.arccos(cosine_angle)
-    if math.isnan(angle):
-        if round(cosine_angle,10) == -1:
-            angle = np.pi
-        elif round(cosine_angle,10) == 1:
-            angle = 0
-        else:
-            print("angle out of np.arccos range [-1,1]")
 
     return np.degrees(angle)
 
