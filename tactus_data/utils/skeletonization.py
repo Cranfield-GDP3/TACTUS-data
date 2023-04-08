@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 from enum import Enum
 from typing import Union
@@ -252,6 +253,13 @@ def three_points_angle(p1: tuple[float, float], p2: tuple[float, float], p3: tup
 
     cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
     angle = np.arccos(cosine_angle)
+    if math.isnan(angle):
+        if round(cosine_angle,10) == -1:
+            angle = np.pi
+        elif round(cosine_angle,10) == 1:
+            angle = 0
+        else:
+            print("angle out of np.arccos range [-1,1]")
 
     return np.degrees(angle)
 
