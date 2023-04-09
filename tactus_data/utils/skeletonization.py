@@ -1,3 +1,4 @@
+import copy
 import math
 from typing import List, Tuple
 from pathlib import Path
@@ -136,7 +137,7 @@ def king_of_france(keypoints: list) -> list:
     raise ValueError("The skeleton is already beheaded")
 
 
-def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
+def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray], ):
     """create a middle keypoint from two keypoint. Using numpy.mean was
     significantly slower."""
     new_kp = [0] * len(kp_1)
@@ -304,6 +305,7 @@ class SkeletonRollingWindow:
             angles_to_compute = angles_to_compute.value
         self.angles_to_compute = angles_to_compute
 
+        self.skeleton = None
         self.keypoints_rw = deque(maxlen=window_size)
         self.height_rw = deque(maxlen=window_size)
         self.angles_rw = deque(maxlen=window_size)
@@ -326,12 +328,13 @@ class SkeletonRollingWindow:
             skeleton.
         """
         keypoints = skeleton["keypoints"]
+        self.skeleton = copy.deepcopy(skeleton)
         if has_head:
             keypoints = king_of_france(skeleton["keypoints"])
         if has_confidence:
             keypoints = remove_confidence_points(keypoints)
         keypoints = np.array(keypoints)
-
+        self.skeleton["keypoints"] = copy.deepcopy(keypoints)
         normalized_keypoints = self._add_keypoints(keypoints)
         angles = self._add_angles()
         velocities = self._add_velocity()
