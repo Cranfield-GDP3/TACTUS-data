@@ -60,7 +60,7 @@ from matplotlib import axes, figure
 from matplotlib import patches
 import numpy as np
 
-from tactus_data.utils.skeletonization import keypoints_to_xy, skeleton_bbx, BK
+from tactus_data.utils.skeletonization import keypoints_to_xy, skeleton_bbx, BK, king_of_france, remove_confidence_points
 
 
 def plot_bbx(ax: axes.Axes,
@@ -183,3 +183,14 @@ def fig_to_numpy(fig: figure.Figure) -> np.ndarray:
 
     plt.close(fig)
     return img
+
+def pipeline_visualisation(ax: axes.Axes, keypoints: list, prediction: int):
+
+    AVAILABLE_CLASSES = ['kicking', 'punching', 'pushing', 'neutral']
+    formatted_skel = remove_confidence_points(king_of_france(keypoints))
+    plot_bbx(ax, formatted_skel,color='blue')
+    scatter_skeleton_2d(ax, formatted_skel)
+    plot_skeleton_2d(ax, formatted_skel)
+    bbx = skeleton_bbx(formatted_skel)
+
+    ax.text(bbx[0],bbx[1],AVAILABLE_CLASSES[prediction],ha='left',va='top',color='blue')
