@@ -137,13 +137,11 @@ def king_of_france(keypoints: list) -> list:
 
 
 def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
-    """create a middle keypoint from two keypoint"""
-    if isinstance(kp_1, np.ndarray) and isinstance(kp_1, np.ndarray):
-        new_kp = np.mean([kp_1, kp_2], axis=0)
-    else:
-        new_kp = [0] * len(kp_1)
-        for i, _ in enumerate(kp_1):
-            new_kp[i] = (kp_1[i] + kp_2[i]) / 2
+    """create a middle keypoint from two keypoint. Using numpy.mean was
+    significantly slower."""
+    new_kp = [0] * len(kp_1)
+    for i in range(len(new_kp)):
+        new_kp[i] = (kp_1[i] + kp_2[i]) / 2
 
     return new_kp
 
