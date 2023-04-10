@@ -1,8 +1,6 @@
-import math
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from pathlib import Path
 from enum import Enum
-from typing import Union
 from collections import deque
 import numpy as np
 import cv2
@@ -137,10 +135,9 @@ def king_of_france(keypoints: list) -> list:
 
 
 def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
-    """create a middle keypoint from two keypoint. Using numpy.mean was
-    significantly slower."""
+    """create a middle keypoint from two keypoint"""
     new_kp = [0] * len(kp_1)
-    for i in range(len(new_kp)):
+    for i, _ in enumerate(kp_1):
         new_kp[i] = (kp_1[i] + kp_2[i]) / 2
 
     return new_kp
@@ -222,7 +219,7 @@ def skeleton_height(keypoints: np.ndarray):
     kp_r_ankle = get_joint(keypoints, BK.RAnkle)
     kp_mid_ankle = middle_keypoint(kp_l_ankle, kp_r_ankle)
 
-    height = np.linalg.norm(kp_neck - kp_mid_ankle)
+    height = ((kp_neck[0] - kp_mid_ankle[0])**2 + (kp_neck[1] - kp_mid_ankle[1])**2)**0.5
     return height
 
 
@@ -349,12 +346,12 @@ class SkeletonRollingWindow:
         relative_keypoints = offset_keypoints(keypoints)
 
         self._add_height(keypoints)
-        mean_height = self.get_mean_height()
 
-        normalized_keypoints = relative_keypoints / mean_height
-        self.keypoints_rw.append(normalized_keypoints)
+        mean_height = sum(self.height_rw) / self.window_size
+        relative_keypoints /= mean_height
+        self.keypoints_rw.append(relative_keypoints)
 
-        return normalized_keypoints
+        return relative_keypoints
 
     def _add_height(self, keypoints: list) -> float:
         """add the height over the rolling window"""
