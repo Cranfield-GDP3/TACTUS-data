@@ -1,4 +1,5 @@
-from typing import List, Tuple, Union
+import copy
+from typing import List, Tuple
 from pathlib import Path
 from enum import Enum
 from collections import deque
@@ -134,8 +135,9 @@ def king_of_france(keypoints: list) -> list:
     raise ValueError("The skeleton is already beheaded")
 
 
-def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray],):
-    """create a middle keypoint from two keypoint"""
+def middle_keypoint(kp_1: Union[list, np.ndarray], kp_2: Union[list, np.ndarray], ):
+    """create a middle keypoint from two keypoint. Using numpy.mean was
+    significantly slower."""
     new_kp = [0] * len(kp_1)
     for i, _ in enumerate(kp_1):
         new_kp[i] = (kp_1[i] + kp_2[i]) / 2
@@ -301,6 +303,7 @@ class SkeletonRollingWindow:
             angles_to_compute = angles_to_compute.value
         self.angles_to_compute = angles_to_compute
 
+        self.skeleton = None
         self.keypoints_rw = deque(maxlen=window_size)
         self.height_rw = deque(maxlen=window_size)
         self.angles_rw = deque(maxlen=window_size)
@@ -328,6 +331,9 @@ class SkeletonRollingWindow:
         if has_confidence:
             keypoints = remove_confidence_points(keypoints)
         keypoints = np.array(keypoints)
+
+        self.skeleton = copy.deepcopy(skeleton)
+        self.skeleton["keypoints"] = copy.deepcopy(keypoints)
 
         normalized_keypoints = self._add_keypoints(keypoints)
         angles = self._add_angles()
