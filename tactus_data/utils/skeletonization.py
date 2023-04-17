@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from pathlib import Path
 from enum import Enum
 from collections import deque
