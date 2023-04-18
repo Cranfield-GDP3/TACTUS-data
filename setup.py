@@ -64,7 +64,7 @@ setup(
     project_urls={
         "issues": "https://github/Cranfield-GDP3/TACTUS-data/issues",
     },
-    python_requires=">=3.9",
+    python_requires=">=3.8.10",
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require=extras_require,
