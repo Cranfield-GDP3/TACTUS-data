@@ -55,7 +55,7 @@ class VideoCapture:
         self.target_fps = target_fps
         self._capture_fps = self.get_capture_fps(capture_fps)
         self.extract_freq = self.get_extract_frequency()
-        self._out_fps = self.capture_fps / self.extract_freq
+        self._out_fps = self._capture_fps / self.extract_freq
 
         self._imgs_queue = Queue(maxlen=5)
         self._stop_event = threading.Event()
@@ -63,10 +63,6 @@ class VideoCapture:
         self._thread.start()
 
         self.drop_warning_enable = drop_warning_enable
-
-    @property
-    def capture_fps(self):
-        return self._capture_fps
 
     def get_capture_fps(self, value: Union[None, float]):
         if value is None:
