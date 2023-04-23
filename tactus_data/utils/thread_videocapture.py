@@ -114,7 +114,7 @@ class VideoCapture:
         if self.target_fps is None:
             return 1
 
-        extract_freq = int(self.capture_fps / self.target_fps)
+        extract_freq = int(self._capture_fps / self.target_fps)
 
         if extract_freq == 0:
             raise ValueError("desired_fps is higher than half the stream frame rate")
