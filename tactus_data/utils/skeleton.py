@@ -223,6 +223,18 @@ class Skeleton:
         """
         return self.get_bbox("blwh")
 
+    @property
+    def bbox_cxcywh(self) -> List[float]:
+        """
+        return the center-x center-y, width-height bounding box.
+
+        Returns
+        -------
+        List[float]
+            x_center, y_center, width, height
+        """
+        return self.get_bbox("blwh")
+
     def get_bbox(self, direction: str, allow_estimation: bool = True) -> List[float]:
         """
         return a bounding box in the correct format
@@ -234,6 +246,7 @@ class Skeleton:
             "ltwh": left-top, width-height
             "lbrt": left-bottom, right-top
             "lbwh": left-bottom, width-height
+            "cxcywh": center-x center-y, width-height
         allow_estimation: bool
             allow the bounding box to be computed from the keypoints in
             case the bounding box is not available.
@@ -259,6 +272,10 @@ class Skeleton:
 
         if direction.startswith('lt'):
             bbox[:2] = [x_left, y_top]
+
+        if direction.startswith('cxcy'):
+            bbox[:2] = [(x_left + x_right) / 2,
+                        (y_top + y_bottom) / 2]
 
         return bbox
 
