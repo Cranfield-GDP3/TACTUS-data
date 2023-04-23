@@ -66,12 +66,13 @@ MEDIUM_ANGLES_LIST = [
 
 
 class Skeleton:
-    def __init__(self, bbox_bltr: Sequence = (), score: float = None, keypoints: Sequence = None, keypoints_visibility: Sequence = None) -> None:
+    def __init__(self, bbox_bltr: Sequence = (), score: float = None, keypoints: Sequence = None, keypoints_visibility: Sequence = None, tracking_id: int = None) -> None:
         self._boundbing_box_bltr: Tuple[float, float, float, float] = None
         self._score: float = score
         self._keypoints: Tuple[float] = None
         self._keypoints_visibility: Tuple[bool] = None
         self._height: float = None
+        self.tracking_id = tracking_id
 
         self.bbox = bbox_bltr
         self.keypoints = keypoints
@@ -101,7 +102,7 @@ class Skeleton:
 
     @property
     def keypoints_visibility(self):
-        return self._keypoints
+        return self._keypoints_visibility
 
     @keypoints_visibility.setter
     def keypoints_visibility(self, values: List[float]):
@@ -334,10 +335,11 @@ class Skeleton:
 
     def toJson(self):
         """Serialise a skeleton to JSON."""
-        return {"bbox_bltr": self._boundbing_box_bltr,
+        return {"bbox_bltr": self.bbox_bltr,
                 "score": self._score,
-                "keypoints": self._keypoints,
-                "keypoints_visibility": self._keypoints_visibility,
+                "keypoints": self.keypoints,
+                "keypoints_visibility": self.keypoints_visibility,
+                "tracking_id": self.tracking_id,
                 }
 
 
