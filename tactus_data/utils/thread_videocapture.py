@@ -64,7 +64,21 @@ class VideoCapture:
 
         self.drop_warning_enable = drop_warning_enable
 
-    def get_capture_fps(self, value: Union[None, float]):
+    def get_capture_fps(self, value: Union[None, float]) -> float:
+        """
+        return the input capture frame rate, either from its property
+        or via an estimation, or the user input if provided.
+
+        Parameters
+        ----------
+        value : Union[None, float]
+            user input
+
+        Returns
+        -------
+        float
+            the capture frame rate.
+        """
         if value is None:
             # cv2.CAP_PROP_FPS returns 0 if the property doesn't exist
             capture_fps = self._cap.get(cv2.CAP_PROP_FPS)
