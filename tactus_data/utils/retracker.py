@@ -42,24 +42,22 @@ def deepsort_track_frame(
     return tracks
 
 
-def stupid_reid(skeletons_json: dict) -> dict:
-    for frame in skeletons_json["frames"]:
-        skeletons = frame["skeletons"]
+def stupid_reid(skeletons: List[Skeleton]) -> List[Skeleton]:
+    """compare the x center of the bounding box to identify the
+    skeleton which is the most on the left, and the one which is the
+    most on the right."""
+    x_pos_skeletons = [skeleton.bbox_cxcywh[0] for skeleton in skeletons]
 
-        x_pos_skeletons = [skeleton["keypoints"][0] # Nose keypoint
-                           for skeleton
-                           in skeletons]
+    index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
+    index_max = max(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
 
-        index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
-        index_max = max(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
+    if len(skeletons) == 1:
+        skeletons[0].tracking_id = 1
+    else:
+        skeletons[index_min].tracking_id = 1
+        skeletons[index_max].tracking_id = 2
 
-        if len(skeletons) == 1:
-            skeletons[0]["id_stupid"] = 1
-        else:
-            skeletons[index_min]["id_stupid"] = 1
-            skeletons[index_max]["id_stupid"] = 2
-
-    return skeletons_json
+    return skeletons
 
 
 def load_image(image_path: Path) -> np.ndarray:
