@@ -66,15 +66,15 @@ MEDIUM_ANGLES_LIST = [
 
 
 class Skeleton:
-    def __init__(self, bbox_bltr: Sequence = (), score: float = None, keypoints: Sequence = None, keypoints_visibility: Sequence = None, tracking_id: int = None) -> None:
-        self._boundbing_box_bltr: Tuple[float, float, float, float] = None
+    def __init__(self, bbox_lbrt: Sequence = (), score: float = None, keypoints: Sequence = None, keypoints_visibility: Sequence = None, tracking_id: int = None) -> None:
+        self._boundbing_box_lbrt: Tuple[float, float, float, float] = None
         self._score: float = score
         self._keypoints: Tuple[float] = None
         self._keypoints_visibility: Tuple[bool] = None
         self._height: float = None
         self.tracking_id = tracking_id
 
-        self.bbox = bbox_bltr
+        self.bbox = bbox_lbrt
         self.keypoints = keypoints
         self.keypoints_visibility = keypoints_visibility
 
@@ -167,25 +167,25 @@ class Skeleton:
             raise ValueError("The input bounding box should be bottom-left, top-right "
                              "coordinates, i.e. (x_left, y_top, x_right, y_bottom).")
 
-        self._boundbing_box_bltr = value
+        self._boundbing_box_lbrt = value
     bbox = property(None, bbox_setter)
 
     @property
-    def bbox_tlbr(self) -> List[float]:
+    def bbox_ltrb(self) -> List[float]:
         """
-        return the top-left, bottom-right bounding box.
+        return the left-top, right-bottom bounding box.
 
         Returns
         -------
         List[float]
             x_left, y_top, x_right, y_bottom
         """
-        return self.get_bbox("tlbr")
+        return self.get_bbox("ltrb")
 
     @property
-    def bbox_tlwh(self) -> List[float]:
+    def bbox_ltwh(self) -> List[float]:
         """
-        return the top-left, width-height bounding box.
+        return the left-top, width-height bounding box.
 
         Returns
         -------
@@ -195,21 +195,21 @@ class Skeleton:
         return self.get_bbox("tlwh")
 
     @property
-    def bbox_bltr(self) -> List[float]:
+    def bbox_lbrt(self) -> List[float]:
         """
-        return the bottom-left, top-right bounding box.
+        return the left-bottom, right-top bounding box.
 
         Returns
         -------
         List[float]
             x_left, y_bottom, x_right, y_top
         """
-        return self._boundbing_box_bltr
+        return self._boundbing_box_lbrt
 
     @property
-    def bbox_blwh(self) -> List[float]:
+    def bbox_lbwh(self) -> List[float]:
         """
-        return the bottom-left, width-height bounding box.
+        return the left-bottom, width-height bounding box.
 
         Returns
         -------
@@ -225,10 +225,10 @@ class Skeleton:
         Parameters
         ----------
         direction : str
-            "tlbr": top-left, bottom-right
-            "tlwh": top-left, width-height
-            "bltr": bottom-left, top-right
-            "blwh": bottom-left, width-height
+            "ltrb": left-top, right-bottom
+            "ltwh": left-top, width-height
+            "lbrt": left-bottom, right-top
+            "lbwh": left-bottom, width-height
         allow_estimation: bool
             allow the bounding box to be computed from the keypoints in
             case the bounding box is not available.
@@ -238,12 +238,12 @@ class Skeleton:
         List[float]
             bounding box
         """
-        if self._boundbing_box_bltr is None:
+        if self._boundbing_box_lbrt is None:
             if not allow_estimation:
                 raise AttributeError("There is no bounding box associated to this skeleton.")
             bbox = self._estimated_bbx()
         else:
-            bbox = list(self._boundbing_box_bltr)
+            bbox = list(self._boundbing_box_lbrt)
 
         x_left, y_top, x_right, y_bottom = bbox
 
@@ -252,7 +252,7 @@ class Skeleton:
             height = y_top - y_bottom
             bbox[2:] = [width, height]
 
-        if direction.startswith('tl'):
+        if direction.startswith('lt'):
             bbox[:2] = [x_left, y_top]
 
         return bbox
@@ -335,7 +335,7 @@ class Skeleton:
 
     def toJson(self):
         """Serialise a skeleton to JSON."""
-        return {"bbox_bltr": self.bbox_bltr,
+        return {"bbox_lbrt": self.bbox_lbrt,
                 "score": self._score,
                 "keypoints": self.keypoints,
                 "keypoints_visibility": self.keypoints_visibility,
