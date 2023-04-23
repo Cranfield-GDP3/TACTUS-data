@@ -147,6 +147,9 @@ class VideoCapture:
         Grabs, decodes and returns the next subsampled video frame.
         If there is no image in the queue, wait for one to arrive.
         """
+        if self._stop_event.isSet() and self._imgs_queue.is_empty():
+            return None
+
         while self._imgs_queue.is_empty():
             continue
 
@@ -156,6 +159,11 @@ class VideoCapture:
         frame_count = 0
         while not self._stop_event.isSet():
             ret, frame = self._cap.read()
+            # stop thread when a video is over
+            if self.mode == "video" and ret is False:
+                self._stop_event.set()
+                continue
+
             if ret is False:
                 continue
 
