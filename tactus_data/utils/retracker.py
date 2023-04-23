@@ -1,48 +1,18 @@
 from pathlib import Path
-from typing import Union
+from typing import List
 import numpy as np
+from PIL import Image
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from deep_sort_realtime.deep_sort.track import Track
-from PIL import Image
-from typing import List
 
-
-def deepsort(images_dir: Path, skeletons_json: dict):
-    """
-    retrack an extracted video with deepsort algorithm.
-
-    Parameters
-    ----------
-    images_dir : Path
-        The path to the folder containing all the extracted images
-    skeletons_json : dict
-        formatted dictionnary with the skeletons information
-    """
-    tracker = DeepSort(n_init=3, max_age=5)
-
-    frame_to_delete = []
-    for i_frame, frame in enumerate(skeletons_json["frames"]):
-        frame_img = load_image(images_dir / frame["frame_id"])
-
-        track_ids = deepsort_track_frame(tracker, frame_img, frame["skeletons"])
-        if track_ids:
-            for i_skeleton, skeleton in enumerate(frame["skeletons"]):
-                skeleton["id_deepsort"] = track_ids[i_skeleton]
-        else:
-            frame_to_delete.append(i_frame)
-
-    for i_frame in reversed(frame_to_delete):
-        del skeletons_json["frames"][i_frame]
-
-    return skeletons_json
+from tactus_data.utils.skeleton import Skeleton
 
 
 def deepsort_track_frame(
-        tracker: DeepSort,
-        frame: np.ndarray,
-        skeletons: List[dict],
-        new_version: bool = False,
-    ) -> Union[List[Track], List[int], bool]:
+    tracker: DeepSort,
+    frame: np.ndarray,
+    skeletons: List[Skeleton]
+) -> List[Track]:
     """
     update the tracker for one frame.
 
@@ -52,40 +22,24 @@ def deepsort_track_frame(
         the tracker object
     frame : np.ndarray
         the numpy array of the image which the skeletons have been
-        extracted from
-    skeletons : list[dict]
+        extracted from.
+    skeletons : list[Skeleton]
         the list of the skeletons for this frame. Each skeleton must
-        have a box key with [left,top,w,h] as a value
+        have a its bounding box.
 
     Returns
     -------
-    bool | np.ndarray
-        returns false if no skeletons are being tracked on the frame
-        else return the new track ids
+    List[Tracks]
+        returns the list of deepsort tracks.
     """
     bbs = []
     for skeleton in skeletons:
-        bbs.append((skeleton["box"], 1, "1", None))
+        bbs.append((skeleton.bbox_ltwh, skeleton.score, "1", None))
 
     tracks: list[Track]
     tracks = tracker.update_tracks(bbs, frame=frame)
 
-    if new_version:
-        return tracks
-    else:
-        at_least_one_tracked = False
-        track_ids = []
-        for track in tracks:
-            if not track.is_confirmed():
-                continue
-
-            at_least_one_tracked = True
-            track_ids.append(int(track.track_id))
-
-        if not at_least_one_tracked:
-            return False
-
-        return track_ids
+    return tracks
 
 
 def stupid_reid(skeletons_json: dict) -> dict:
