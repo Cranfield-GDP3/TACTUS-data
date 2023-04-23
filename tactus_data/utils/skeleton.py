@@ -153,6 +153,11 @@ class Skeleton:
 
         return width
 
+    @property
+    def score(self) -> float:
+        """return the skeleton score"""
+        return self._score
+
     def bbox_setter(self, value: Sequence):
         """set the bounding box value after some basic verification."""
         if value == ():
