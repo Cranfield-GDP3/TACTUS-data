@@ -166,6 +166,9 @@ class VideoCapture:
         return self._imgs_queue.popleft()
 
     def _thread_read(self):
+        """
+        read frame from a input capture and put them in a buffer.
+        """
         frame_count = 0
         while not self._stop_event.isSet():
             ret, frame = self._cap.read()
@@ -207,12 +210,18 @@ class VideoCapture:
 
 
 class Queue(deque):
+    """the queue.Queue often used for threading was too high level
+    and did not allow enough control over the lock. as a result,
+    "private" methods were too often used so this class is a lighter
+    queue.Queue implementation better suited for our use case."""
     def __init__(self, maxlen: int):
         self.lock = threading.Lock()
         super().__init__(maxlen=maxlen)
 
     def is_empty(self):
+        """check if the queue is empty"""
         return len(self) == 0
 
     def is_full(self):
+        """check if the queue is full"""
         return len(self) == self.maxlen
