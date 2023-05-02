@@ -3,11 +3,12 @@ A videoCapture API extension that allows for subsampling and threading
 """
 from collections import deque
 from pathlib import Path
-from typing import Union, Literal
+from typing import Union, Literal, Tuple
 from time import time
 import threading
 import warnings
 
+import numpy as np
 import cv2
 
 
@@ -59,10 +60,17 @@ class VideoCapture:
 
         self._imgs_queue = Queue(maxlen=5)
         self._stop_event = threading.Event()
+        self.frame_count = 0
         self._thread = threading.Thread(target=self._thread_read)
         self._thread.start()
 
         self.drop_warning_enable = drop_warning_enable
+
+    @property
+    def frame_id(self) -> int:
+        """return a frame id that is the index of the frame * the
+        subsample rate"""
+        return self.frame_count * self.extract_freq
 
     def get_capture_fps(self, value: Union[None, float]) -> float:
         """
@@ -152,7 +160,7 @@ class VideoCapture:
         self._stop_event.set()
         self._cap.release()
 
-    def read(self):
+    def read(self) -> Tuple[bool, np.ndarray]:
         """
         Grabs, decodes and returns the next subsampled video frame.
         If there is no image in the queue, wait for one to arrive.
@@ -169,7 +177,7 @@ class VideoCapture:
         """
         read frame from a input capture and put them in a buffer.
         """
-        frame_count = 0
+        self.frame_count = 0
         while not self._stop_event.isSet():
             ret, frame = self._cap.read()
             # stop thread when a video is over
@@ -180,11 +188,11 @@ class VideoCapture:
             if ret is False:
                 continue
 
-            frame_count += 1
-            if frame_count != self.extract_freq:
+            self.frame_count += 1
+            if self.frame_count != self.extract_freq:
                 continue
 
-            frame_count = 0
+            self.frame_count = 0
             if self.mode == "stream":
                 # this avoid the queue shrinking before the result of
                 # full() can be used.
