@@ -22,10 +22,9 @@ long_description = read("README.md")
 
 install_requires = [
     "requests",
-    "cython",
     "deep-sort-realtime",
     "torch",
-    "tactus-yolov7 @ git+https://github.com/Cranfield-GDP3/yolov7.git",
+    "ultralytics",
     "matplotlib",
     "Pillow",
     "numpy",
