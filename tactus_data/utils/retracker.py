@@ -46,6 +46,9 @@ def stupid_reid(skeletons: List[Skeleton]) -> List[Skeleton]:
     """compare the x center of the bounding box to identify the
     skeleton which is the most on the left, and the one which is the
     most on the right."""
+    if len(skeletons) == 0:
+        return []
+
     x_pos_skeletons = [skeleton.bbox_cxcywh[0] for skeleton in skeletons]
 
     index_min = min(range(len(x_pos_skeletons)), key=x_pos_skeletons.__getitem__)
