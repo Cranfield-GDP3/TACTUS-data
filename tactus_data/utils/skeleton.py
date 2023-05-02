@@ -2,6 +2,14 @@ from typing import List, Tuple, Union, Sequence
 from enum import IntEnum, Enum
 import numpy as np
 
+from json import JSONEncoder
+
+def _default(self, obj):
+    return getattr(obj.__class__, "to_json", _default.default)(obj)
+
+_default.default = JSONEncoder().default
+JSONEncoder.default = _default
+
 
 class BodyKpt(IntEnum):
     """
@@ -166,11 +174,12 @@ class Skeleton:
         if len(value) != 4:
             raise ValueError("Bounding box has more than 4 coordinates.")
 
-        x_left, y_top, x_right, y_bottom = value
+        x_left, y_bottom, x_right, y_top = value
 
         if x_left > x_right or y_top < y_bottom:
-            raise ValueError("The input bounding box should be bottom-left, top-right "
-                             "coordinates, i.e. (x_left, y_top, x_right, y_bottom).")
+            raise ValueError("The input bounding box should be left-bottom, right-top "
+                             "coordinates, i.e. (x_left, y_bottom, x_right, y_top). got "
+                             f"{value}")
 
         self._boundbing_box_lbrt = value
     bbox = property(None, bbox_setter)
@@ -263,12 +272,15 @@ class Skeleton:
         else:
             bbox = list(self._boundbing_box_lbrt)
 
-        x_left, y_top, x_right, y_bottom = bbox
+        x_left, y_bottom, x_right, y_top = bbox
 
         if direction.endswith("wh"):
             width = x_right - x_left
             height = y_top - y_bottom
             bbox[2:] = [width, height]
+
+        if direction.endswith('rb'):
+            bbox[:2] = [x_right, y_bottom]
 
         if direction.startswith('lt'):
             bbox[:2] = [x_left, y_top]
@@ -355,7 +367,7 @@ class Skeleton:
 
         return keypoints
 
-    def toJson(self):
+    def to_json(self):
         """Serialise a skeleton to JSON."""
         return {"bbox_lbrt": self.bbox_lbrt,
                 "score": self._score,
