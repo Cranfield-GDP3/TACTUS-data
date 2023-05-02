@@ -20,18 +20,6 @@ ACTION_INDEXES = ["neutral", "neutral", "kicking",
                   "neutral", "punching", "pushing"]
 
 
-def extract_frames(fps: int = 10):
-    """
-    Extract frame from a folder containing videos.
-
-    Parameters
-    ----------
-    fps : int
-        The fps we want to have
-    """
-    dataset.extract_frames(NAME, dataset.RAW_DIR, dataset.INTERIM_DIR, fps, "avi")
-
-
 def extract_skeletons(fps: int = 10, device: str = None):
     """
     Extract skeletons from a folder containing video frames using
@@ -45,7 +33,7 @@ def extract_skeletons(fps: int = 10, device: str = None):
         the computing device to use with yolov7.
         Can be 'cpu', 'cuda:0' etc.
     """
-    dataset.extract_skeletons(NAME, dataset.INTERIM_DIR, dataset.PROCESSED_DIR, fps, device)
+    dataset.extract_skeletons(NAME, fps, "avi", device)
 
 
 def augment(grid: dict = None, fps: int = 10):
