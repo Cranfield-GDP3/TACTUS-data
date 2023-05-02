@@ -42,11 +42,11 @@ BodyJoints = [
     (BodyKpt.LHip, BodyKpt.LShoulder),
     (BodyKpt.RShoulder, BodyKpt.LShoulder),
     (BodyKpt.RShoulder, BodyKpt.RElbow),
-    (BodyKpt.RElbow, BodyKpt.RWrist),
     (BodyKpt.LShoulder, BodyKpt.LElbow),
+    (BodyKpt.RElbow, BodyKpt.RWrist),
     (BodyKpt.LElbow, BodyKpt.LWrist),
-    (BodyKpt.LShoulder, BodyKpt.Neck),
     (BodyKpt.RShoulder, BodyKpt.Neck),
+    (BodyKpt.LShoulder, BodyKpt.Neck),
 ]
 
 
