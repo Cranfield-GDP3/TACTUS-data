@@ -165,12 +165,13 @@ class Yolov8:
                 continue
             # scale the prediction back to the input image size
             pred[:, :4] = scale_boxes(img_size, pred[:, :4], img0_size).round()
-            pred[:, 6:] = scale_coords(img_size, pred[:, 6:], img0_size).round()
+            pred_kpts = pred[:, 6:].view(len(pred), *(17, 3)) if len(pred) else pred[:, 6:]
+            pred_kpts = scale_coords(img_size, pred_kpts, img0_size).round()
 
-            for det in pred:
+            for i, det in enumerate(pred):
                 skeleton = Skeleton(bbox_lbrt=det[:4].tolist(),
                                     score=det[4].tolist(),
-                                    keypoints=det[6:].tolist())
+                                    keypoints=torch.flatten(pred_kpts[i]).tolist())
                 results_skeleton.append(skeleton)
 
         return results_skeleton
