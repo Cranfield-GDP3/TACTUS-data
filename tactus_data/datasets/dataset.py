@@ -1,4 +1,3 @@
-import cProfile
 from pathlib import Path
 from enum import Enum
 import random
