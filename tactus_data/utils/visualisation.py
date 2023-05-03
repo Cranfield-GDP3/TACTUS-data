@@ -5,24 +5,24 @@ Tools to visualise skeletons in beautiful ways.
 from typing import Tuple, Union
 import cv2
 import numpy as np
-from .skeleton import Skeleton, BodyJoints
+from .skeleton import Skeleton, BodyJoints, round_list
 
 
-body_joint_colors = ["#13EAC9", "#04D8B2",  # ankles to knees
-                     "#069AF3", "#1F88F2",  # knees to hips
-                     "#7FFF00",             # left hip to right hip
-                     "#C1F80A", "#AAFF32",  # hips to shoulders
-                     "#FFD700",             # left shoulder to right shoulder
-                     "#FFA500", "#F97306",  # shoulders to elbows
-                     "#FF4500", "#FE420F",  # elbows to wrists
-                     "#EFE63B", "#EDC140",  # shoulders to neck
+body_joint_colors = [(19, 234, 201), (4, 216, 178),   # ankles to knees
+                     (6, 154, 243), (31, 136, 242),   # knees to hips
+                     (127, 255, 0),                   # left hip to right hip
+                     (193, 248, 10), (170, 255, 50),  # hips to shoulders
+                     (255, 215, 0),                   # left shoulder to right shoulder
+                     (255, 165, 0), (249, 115, 6),    # shoulders to elbows
+                     (255, 69, 0), (254, 66, 15),     # elbows to wrists
+                     (239, 230, 59), (237, 193, 64),  # shoulders to neck
                      ]
 
 
 def plot_bbox(image: np.ndarray,
               skeleton: Skeleton,
               *,
-              color: Union[str, Tuple[int, int, int]] = "red",
+              color: Tuple[int, int, int] = (0, 0, 255),
               thickness: float = 2,
               label: str = None
               ) -> np.ndarray:
@@ -51,7 +51,10 @@ def plot_bbox(image: np.ndarray,
     """
     x_left, y_bottom, x_right, y_top = skeleton.bbox_lbrt
 
-    cv2.rectangle(image, (x_left, y_bottom), (x_right, y_top), color=color, thickness=thickness)
+    cv2.rectangle(image,
+                  round_list((x_left, y_bottom)),
+                  round_list((x_right, y_top)),
+                  color=color, thickness=thickness)
 
     if label is not None:
         cv2.putText(image, label, (x_left, y_top),
@@ -91,6 +94,9 @@ def plot_joints(image: np.ndarray,
         if color is None:
             joint_color = body_joint_colors[i]
 
-        cv2.line(image, skeleton.get_kpt(kp_1), skeleton.get_kpt(kp_2), joint_color, thickness)
+        cv2.line(image,
+                 round_list(skeleton.get_kpt(kp_1)),
+                 round_list(skeleton.get_kpt(kp_2)),
+                 joint_color, thickness)
 
     return image
