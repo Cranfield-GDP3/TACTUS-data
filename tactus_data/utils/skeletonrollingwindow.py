@@ -46,10 +46,10 @@ class SkeletonRollingWindow:
         """add relative keypoints to the rolling window"""
         self._add_height(skeleton.height)
 
-        relative_keypoints = skeleton.relative_to_neck()
+        relative_keypoints = skeleton.relative_to_neck().flatten()
         mean_height = self._get_mean_height()
         for i in range(len(relative_keypoints)):
-            relative_keypoints[i] /= mean_height
+            relative_keypoints[i] = relative_keypoints[i] / mean_height
 
         self.keypoints_rw.append(relative_keypoints)
 

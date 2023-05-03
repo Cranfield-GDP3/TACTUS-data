@@ -171,7 +171,7 @@ class Yolov8:
             for i, det in enumerate(pred):
                 skeleton = Skeleton(bbox_lbrt=det[:4].tolist(),
                                     score=det[4].tolist(),
-                                    keypoints=torch.flatten(pred_kpts[i]).tolist())
+                                    keypoints=pred_kpts[i].tolist())
                 results_skeleton.append(skeleton)
 
         return results_skeleton

@@ -91,20 +91,21 @@ class Skeleton:
         return self._keypoints
 
     @keypoints.setter
-    def keypoints(self, kpts: List[float]):
+    def keypoints(self, kpts: List[List[float]]):
         if kpts is None:
             return
 
         if not check_keypoints(kpts):
-            raise ValueError("The provided list is probably not keypoints "
-                             "because its length is not 51, 39, 34 or 26.")
+            raise ValueError("The provided list is probably not keypoints because "
+                             "its length is not 17 nor 14, or each keypoints "
+                             "have less than 2 or more than 3 coordinates.")
 
         if has_head(kpts):
             kpts = king_of_france(kpts)
 
         if has_visibility(kpts):
-            self._keypoints_visibility = kpts[2::3]
-            del kpts[2::3]
+            self._keypoints_visibility = kpts[:][2]
+            del kpts[:][2]
 
         self._keypoints = tuple(kpts)
 
@@ -319,7 +320,7 @@ class Skeleton:
         Tuple[float, float]
             x, y coordinates of the keypoint
         """
-        return self.keypoints[2 * kp_name: 2 * kp_name + 2]
+        return self.keypoints[kp_name]
 
     def get_angles(self, angle_list: List[Tuple[BodyAngles]]) -> List[float]:
         """
@@ -355,15 +356,15 @@ class Skeleton:
 
         return angles
 
-    def relative_to_neck(self) -> List[float]:
+    def relative_to_neck(self) -> np.ndarray:
         """
         return the keypoints coordinates with the Neck as the origin
         """
         x_offset, y_offset = self.get_kpt(BodyKpt.Neck)
 
         keypoints = np.array(self._keypoints)
-        keypoints[0::2] = keypoints[0::2] - x_offset
-        keypoints[1::2] = keypoints[1::2] - y_offset
+        keypoints[:][0] = keypoints[:][0] - x_offset
+        keypoints[:][1] = keypoints[:][1] - y_offset
 
         return keypoints
 
@@ -377,18 +378,13 @@ class Skeleton:
                 }
 
 
-def check_keypoints(keypoints: List[float]) -> bool:
+def check_keypoints(keypoints: List[List[float]]) -> bool:
     """
     verify if the list can be keypoints.
 
-    51: head and visibility
-    39: head but no visibility
-    34: no head but visibility
-    26: no head and no visibility
-
     Parameters
     ----------
-    keypoints : List[float]
+    keypoints : List[List[float]]
         list of body keypoints to check.
 
     Returns
@@ -396,18 +392,20 @@ def check_keypoints(keypoints: List[float]) -> bool:
     bool
         whether or not they are valid keypoints.
     """
-    if len(keypoints) in [51, 39, 34, 26]:
+    if len(keypoints) in (17, 14):
+        return True
+    if len(keypoints[0]) in (2, 3):
         return True
     return False
 
 
-def has_head(keypoints: List[float]) -> bool:
+def has_head(keypoints: List[List[float]]) -> bool:
     """
     verify is the keypoints have head keypoints.
 
     Parameters
     ----------
-    keypoints : List[float]
+    keypoints : List[List[float]]
         list of body keypoints to check.
 
     Returns
@@ -415,18 +413,18 @@ def has_head(keypoints: List[float]) -> bool:
     bool
         whether or not the keypoints have head keypoints.
     """
-    if len(keypoints) in [51, 34]:
+    if len(keypoints) == 17:
         return True
     return False
 
 
-def has_visibility(keypoints: List[float]) -> bool:
+def has_visibility(keypoints: List[List[float]]) -> bool:
     """
     verify is the keypoints have visibility keypoints.
 
     Parameters
     ----------
-    keypoints : List[float]
+    keypoints : List[List[float]]
         list of body keypoints to check.
 
     Returns
@@ -434,7 +432,8 @@ def has_visibility(keypoints: List[float]) -> bool:
     bool
         whether or not the keypoints have visibility keypoints.
     """
-    if len(keypoints) in [51, 39]:
+
+    if len(keypoints[0]) == 3:
         return True
     return False
 
@@ -445,21 +444,16 @@ def round_list(list_to_round: list) -> list:
     return [round(value) for value in list_to_round]
 
 
-def king_of_france(keypoints: list) -> list:
+def king_of_france(keypoints: List[List[float]]) -> List[List[float]]:
     """replace the head of a skeleton by its neck"""
-    period = None
-    if len(keypoints) == 51:
-        period = 3
-    elif len(keypoints) == 34:
-        period = 2
 
-    if period is not None:
+    if len(keypoints) == 17:
         LEar_index = 3
         REar_index = 4
-        kp_LEar = keypoints[LEar_index * period:(LEar_index + 1) * period]
-        kp_REar = keypoints[REar_index * period:(REar_index + 1) * period]
+        kp_LEar = keypoints[LEar_index]
+        kp_REar = keypoints[REar_index]
         neck_kp = middle_keypoint(kp_LEar, kp_REar)
-        return neck_kp + keypoints[5 * period:]
+        return [neck_kp] + keypoints[5:]
 
     raise ValueError("The skeleton is already beheaded")
 
