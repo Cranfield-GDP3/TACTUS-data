@@ -1,11 +1,13 @@
 from typing import List, Tuple, Union, Sequence
 from enum import IntEnum, Enum
+from json import JSONEncoder
 import numpy as np
 
-from json import JSONEncoder
 
+# allow custom serialization function for the Skeleton class
 def _default(self, obj):
     return getattr(obj.__class__, "to_json", _default.default)(obj)
+
 
 _default.default = JSONEncoder().default
 JSONEncoder.default = _default
