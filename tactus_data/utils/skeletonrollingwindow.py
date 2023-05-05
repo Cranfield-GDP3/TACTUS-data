@@ -1,15 +1,15 @@
 from typing import List, Tuple, Sequence
 from collections import deque
 import numpy as np
-from .skeleton import BodyKpt, Skeleton, SMALL_ANGLES_LIST
+from .skeleton import BodyAngles, Skeleton
 
 
 class SkeletonRollingWindow:
-    def __init__(self, window_size: int, angles_to_compute: Sequence[BodyKpt] = None):
+    def __init__(self, window_size: int, angles_to_compute: Sequence[BodyAngles] = None):
         self.window_size = window_size
 
         if angles_to_compute is None:
-            angles_to_compute = SMALL_ANGLES_LIST
+            angles_to_compute = []
         self.angles_to_compute = angles_to_compute
 
         self.skeleton = None
@@ -17,6 +17,7 @@ class SkeletonRollingWindow:
         self.height_rw = deque(maxlen=window_size)
         self.angles_rw = deque(maxlen=window_size)
         self.velocities_rw = deque(maxlen=window_size)
+        self.is_duplicated_rw = deque(maxlen=window_size)
 
     def add_skeleton(self, skeleton: Skeleton) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -39,8 +40,24 @@ class SkeletonRollingWindow:
         normalized_keypoints = self._add_keypoints(skeleton)
         angles = self._add_angles()
         velocities = self._add_velocity()
+        self.is_duplicated_rw.append(False)
 
         return normalized_keypoints, angles, velocities
+
+    def duplicate_last_entry(self, new_bbox_lbrt: Tuple[float, float, float, float]):
+        """
+        duplicate the last entry of the rolling window.
+        """
+        self.skeleton = Skeleton(bbox_lbrt=new_bbox_lbrt)
+        self.keypoints_rw.append(self.keypoints_rw[-1])
+        self.height_rw.append(self.height_rw[-1])
+        self.angles_rw.append(self.angles_rw[-1])
+        self.velocities_rw.append(self.velocities_rw[-1])
+        self.is_duplicated_rw.append(True)
+
+    def is_duplicated(self) -> bool:
+        """return wether or not the last entry is a duplicated entry."""
+        return self.is_duplicated_rw[-1]
 
     def _add_keypoints(self, skeleton: Skeleton) -> List[float]:
         """add relative keypoints to the rolling window"""
