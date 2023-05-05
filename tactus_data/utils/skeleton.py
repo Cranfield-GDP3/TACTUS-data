@@ -107,7 +107,8 @@ class Skeleton:
 
         if has_visibility(kpts):
             self._keypoints_visibility = kpts[:][2]
-            del kpts[:][2]
+            for i in range(len(kpts)):
+                del kpts[i][2]
 
         self._keypoints = tuple(kpts)
 
