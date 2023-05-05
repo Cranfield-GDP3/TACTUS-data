@@ -49,16 +49,16 @@ def plot_bbox(image: np.ndarray,
     np.ndarray
         image with joints drawn.
     """
-    x_left, y_bottom, x_right, y_top = skeleton.bbox_lbrt
+    x_left, y_bottom, x_right, y_top = round_list(skeleton.bbox_lbrt)
 
-    cv2.rectangle(image,
-                  round_list((x_left, y_bottom)),
-                  round_list((x_right, y_top)),
-                  color=color, thickness=thickness)
+    image = cv2.rectangle(image,
+                          (x_left, y_bottom),
+                          (x_right, y_top),
+                          color=color, thickness=thickness)
 
     if label is not None:
-        cv2.putText(image, label, (x_left, y_top),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=8, color=color)
+        image = cv2.putText(image, label, (x_left, y_top),
+                            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=1, color=color)
 
     return image
 
@@ -94,9 +94,9 @@ def plot_joints(image: np.ndarray,
         if color is None:
             joint_color = body_joint_colors[i]
 
-        cv2.line(image,
-                 round_list(skeleton.get_kpt(kp_1)),
-                 round_list(skeleton.get_kpt(kp_2)),
-                 joint_color, thickness)
+        image = cv2.line(image,
+                         round_list(skeleton.get_kpt(kp_1)),
+                         round_list(skeleton.get_kpt(kp_2)),
+                         joint_color, thickness)
 
     return image

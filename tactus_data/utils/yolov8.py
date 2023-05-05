@@ -25,7 +25,10 @@ class Yolov8:
         model_dir : Path
             directory where to find the model weights.
         model_name : str
-            name of the model.
+            name of the model. Must be one of those: "yolov8n-pose.pt",
+            "yolov8s-pose.pt", "yolov8m-pose.pt", "yolov8l-pose.pt",
+            "yolov8x-pose.pt", "yolov8x-pose-p6.pt", "yolov8n.pt",
+            "yolov8s.pt", "yolov8m.pt", "yolov8l.pt", "yolov8x.pt"
         device : str
             the device name to run the model on.
         half : bool, optional
@@ -81,7 +84,7 @@ class Yolov8:
 
         return imgs, img0_size, img_size
 
-    def _predict(self, images: torch.Tensor) -> List[torch.Tensor]:
+    def predict(self, images: torch.Tensor) -> List[torch.Tensor]:
         """
         predict on a tensor containing single or multiple images.
 
@@ -98,7 +101,12 @@ class Yolov8:
         with torch.no_grad():
             return self.model(images)
 
-    def extract_bboxs(self, img: Union[Path, np.ndarray]):
+
+class BboxPredictionYolov8(Yolov8):
+    def __call__(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
+        return self.predict(img)
+
+    def predict(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
         """
         extract the bounding boxes from a given image.
 
@@ -115,11 +123,11 @@ class Yolov8:
             - `scores` list the score for each bounding box.
         """
         if "pose" in self.model_name:
-            raise ValueError("wrong model selected. You can't predict bounding boxes"
+            raise ValueError("wrong model selected. You can't predict bounding boxes "
                              "with a pose-prediction model.")
 
         _img, img0_size, img_size = self._preprocess_img(img)
-        preds = self._predict(_img)
+        preds = super().predict(_img)
         preds = non_max_suppression(preds, conf_thres=0.25, iou_thres=0.45, classes=[0], max_det=300, max_time_img=5)
 
         results_skeleton = []
@@ -134,7 +142,12 @@ class Yolov8:
 
         return results_skeleton
 
-    def extract_skeletons(self, img: Union[Path, np.ndarray]) -> Dict[str, List]:
+
+class PosePredictionYolov8(Yolov8):
+    def __call__(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
+        return self.predict(img)
+
+    def predict(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
         """
         extract the skeletons from a given image.
 
@@ -156,7 +169,7 @@ class Yolov8:
                              "without a pose-prediction model.")
 
         _img, img0_size, img_size = self._preprocess_img(img)
-        preds = self._predict(_img)
+        preds = super().predict(_img)
         preds = non_max_suppression(preds, conf_thres=0.25, iou_thres=0.7, classes=None, max_det=1000, nc=1, max_time_img=5)
 
         results_skeleton = []

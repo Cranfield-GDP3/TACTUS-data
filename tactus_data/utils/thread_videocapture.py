@@ -159,16 +159,17 @@ class VideoCapture:
         """Closes video file or capturing device."""
         self._stop_event.set()
         self._cap.release()
+        self._thread.join()
 
     def read(self) -> Tuple[bool, np.ndarray]:
         """
         Grabs, decodes and returns the next subsampled video frame.
         If there is no image in the queue, wait for one to arrive.
         """
-        if self._stop_event.is_set() and self._imgs_queue.is_empty():
-            return None
-
         while self._imgs_queue.is_empty():
+            if self._stop_event.is_set():
+                return None
+
             continue
 
         return self._imgs_queue.popleft()
@@ -180,19 +181,17 @@ class VideoCapture:
         self.frame_count = 0
         while not self._stop_event.is_set():
             ret, frame = self._cap.read()
-            # stop thread when a video is over
-            if self.mode == "video" and ret is False:
-                self._stop_event.set()
-                continue
 
             if ret is False:
+                # stop thread when a video is over
+                if self.mode == "video":
+                    self._stop_event.set()
                 continue
 
             self.frame_count += 1
-            if self.frame_count != self.extract_freq:
+            if self.frame_count % self.extract_freq != 0:
                 continue
 
-            self.frame_count = 0
             if self.mode == "stream":
                 # this avoid the queue shrinking before the result of
                 # full() can be used.
@@ -206,6 +205,8 @@ class VideoCapture:
                 # when dealing with a video, we can wait for the queue
                 # being not full
                 while self._imgs_queue.is_full():
+                    if self._stop_event.is_set():
+                        return None
                     continue
 
             # we don't need the lock as this is the only thread that

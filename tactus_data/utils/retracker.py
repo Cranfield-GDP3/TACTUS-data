@@ -1,14 +1,12 @@
-from pathlib import Path
 from typing import List
 import numpy as np
-from PIL import Image
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from deep_sort_realtime.deep_sort.track import Track
 
 from tactus_data.utils.skeleton import Skeleton
 
 
-def deepsort_track_frame(
+def deepsort_reid(
     tracker: DeepSort,
     frame: np.ndarray,
     skeletons: List[Skeleton]
@@ -33,11 +31,13 @@ def deepsort_track_frame(
         returns the list of deepsort tracks.
     """
     bbs = []
+    others = []
     for skeleton in skeletons:
         bbs.append((skeleton.bbox_ltwh, skeleton.score, "1", None))
+        others.append(skeleton)
 
-    tracks: list[Track]
-    tracks = tracker.update_tracks(bbs, frame=frame)
+    tracks: List[Track]
+    tracks = tracker.update_tracks(bbs, frame=frame, others=others)
 
     return tracks
 
@@ -61,7 +61,3 @@ def stupid_reid(skeletons: List[Skeleton]) -> List[Skeleton]:
         skeletons[index_max].tracking_id = 2
 
     return skeletons
-
-
-def load_image(image_path: Path) -> np.ndarray:
-    return np.asarray(Image.open(image_path))
