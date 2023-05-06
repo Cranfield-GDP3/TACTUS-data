@@ -190,7 +190,7 @@ class PosePredictionYolov8(Yolov8):
         return results_skeleton
 
 
-def correct_img_size(img: np.ndarray, stride: int) -> np.ndarray:
+def correct_img_size(img: np.ndarray, stride: int, imgsize: int = 640) -> np.ndarray:
     """
     pad the image if it does not have the correct size.
 
@@ -206,10 +206,7 @@ def correct_img_size(img: np.ndarray, stride: int) -> np.ndarray:
     np.ndarray
         new resized image.
     """
-    img_size = img.shape[:2]
-    target_img_size = [x // stride * stride for x in img_size]
-
-    img = LetterBox(target_img_size, auto=True, stride=stride)(image=img)
+    img = LetterBox(imgsize, auto=True, stride=stride)(image=img)
     img = img.transpose((2, 0, 1))[::-1]
     img = np.ascontiguousarray(img)
 
