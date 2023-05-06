@@ -24,6 +24,7 @@ def plot_bbox(image: np.ndarray,
               *,
               color: Tuple[int, int, int] = (0, 0, 255),
               thickness: float = 2,
+              fontScale: float = 2,
               label: str = None
               ) -> np.ndarray:
     """
@@ -57,8 +58,10 @@ def plot_bbox(image: np.ndarray,
                           color=color, thickness=thickness)
 
     if label is not None:
-        image = cv2.putText(image, label, (x_left, y_top),
-                            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=1, color=color)
+        x_left_text = int(x_left + 7)
+        y_top_text = int(y_top - 4)
+        image = cv2.putText(image, label, (x_left_text, y_top_text),
+                            fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=fontScale, color=color)
 
     return image
 
