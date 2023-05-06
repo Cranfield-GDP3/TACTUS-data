@@ -25,11 +25,13 @@ class VideoCapture:
     target_fps : int, optional
         the target frame rate. To ensure a constant time period between
         each subsampled frames, this parameter is used to compute a
-        integer denominator for the extraction frequency. For instance,
+        stride for the capture reading. For instance,
         if the original capture is 64fps and you want a 30fps capture
         out, it is going to take one frame over two giving an effective
         frame rate of 32fps.
         If None, will extract every frame of the capture.
+    buffer_size : int, optional
+        the size of the reading buffer.
     capture_fps : float, optional
         the input frame rate. Can be specified to avoid the frame rate
         estimation part as it can be imprecise or couldn't work if the
@@ -42,7 +44,10 @@ class VideoCapture:
     """
     def __init__(self,
                  filename: Union[Path, str, int],
+                 *,
                  target_fps: int = None,
+                 stride: int = None,
+                 buffer_size: int = 5,
                  capture_fps: float = None,
                  drop_warning_enable: bool = True
                  ) -> None:
@@ -53,12 +58,11 @@ class VideoCapture:
         self.cap_name = filename
         self.mode = self.get_cap_mode(filename)
 
-        self.target_fps = target_fps
         self._capture_fps = self.get_capture_fps(capture_fps)
-        self.extract_freq = self.get_extract_frequency()
-        self._out_fps = self._capture_fps / self.extract_freq
+        self.stride = self.get_stride(target_fps, stride)
+        self._out_fps = self._capture_fps / self.stride
 
-        self._imgs_queue = Queue(maxlen=5)
+        self._imgs_queue = Queue(maxlen=buffer_size)
         self._stop_event = threading.Event()
         self.frame_count = 0
         self._thread = threading.Thread(target=self._thread_read)
@@ -67,10 +71,10 @@ class VideoCapture:
         self.drop_warning_enable = drop_warning_enable
 
     @property
-    def frame_id(self) -> int:
+    def current_frame_index(self) -> int:
         """return a frame id that is the index of the frame * the
         subsample rate"""
-        return self.frame_count * self.extract_freq
+        return self.frame_count
 
     def get_capture_fps(self, value: Union[None, float]) -> float:
         """
@@ -117,17 +121,22 @@ class VideoCapture:
 
         return round(frame_count / (time() - start), 2)
 
-    def get_extract_frequency(self):
-        """evaluate the frame rate over a period of 5 seconds"""
-        if self.target_fps is None:
+    def get_stride(self, target_fps, stride):
+        """compute the stride of the reading process"""
+        if target_fps is not None and stride is not None:
+            raise ValueError("Both `target_fps` and `stride` are set. "
+                             "Only one can be used at a time.")
+
+        if target_fps is None and stride is None:
             return 1
 
-        extract_freq = int(self._capture_fps / self.target_fps)
+        if target_fps is not None:
+            stride = round(self._capture_fps / target_fps)
 
-        if extract_freq == 0:
-            raise ValueError("desired_fps is higher than half the stream frame rate")
+            if stride == 0:
+                raise ValueError("target_fps is higher than the capture frame rate")
 
-        return extract_freq
+        return stride
 
     def get_cap_mode(self, filename: Union[Path, str, int]) -> Literal["stream", "video"]:
         """
@@ -189,7 +198,7 @@ class VideoCapture:
                 continue
 
             self.frame_count += 1
-            if self.frame_count % self.extract_freq != 0:
+            if self.frame_count % self.stride != 0:
                 continue
 
             if self.mode == "stream":
@@ -211,7 +220,7 @@ class VideoCapture:
 
             # we don't need the lock as this is the only thread that
             # can put things in the queue
-            self._imgs_queue.append(frame)
+            self._imgs_queue.append((self.frame_count, frame))
 
     def __del__(self):
         if self.isOpened():
