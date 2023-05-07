@@ -69,7 +69,7 @@ def _count_files_in_dir(directory: Path, pattern: str):
 
 
 def _extract_skeletons_video(model: Yolov8, video_path: Path, fps: int):
-    cap = VideoCapture(video_path, fps)
+    cap = VideoCapture(video_path, target_fps=fps, buffer_size=1)
 
     video_dict = {"frames": []}
 
@@ -79,12 +79,14 @@ def _extract_skeletons_video(model: Yolov8, video_path: Path, fps: int):
     resolution = None
     first_frame = True
 
-    while (frame := cap.read()) is not None:
+    while (cap_frame := cap.read()) is not None:
+        frame_id, frame = cap_frame
+
         if first_frame:
             resolution = frame.shape[:2]
             first_frame = False
 
-        frame_dict = {"frame_id": cap.frame_id}
+        frame_dict = {"frame_id": frame_id}
 
         skeletons = model.extract_skeletons(frame)
         skeletons = stupid_reid(skeletons)
