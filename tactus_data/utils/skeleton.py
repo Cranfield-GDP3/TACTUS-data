@@ -180,10 +180,11 @@ class Skeleton:
 
         x_left, y_bottom, x_right, y_top = value
 
-        if x_left > x_right or y_top < y_bottom:
-            raise ValueError("The input bounding box should be left-bottom, right-top "
-                             "coordinates, i.e. (x_left, y_bottom, x_right, y_top). got "
-                             f"{value}")
+        if x_left > x_right:
+            x_left, x_right = x_right, x_left
+
+        if y_bottom > y_top:
+            y_bottom, y_top = y_top, y_bottom
 
         self._boundbing_box_lbrt = value
     bbox = property(None, bbox_setter)
@@ -210,7 +211,7 @@ class Skeleton:
         List[float]
             x_left, y_top, width, height
         """
-        return self.get_bbox("tlwh")
+        return self.get_bbox("ltwh")
 
     @property
     def bbox_lbrt(self) -> List[float]:
@@ -234,7 +235,7 @@ class Skeleton:
         List[float]
             x_left, y_bottom, width, height
         """
-        return self.get_bbox("blwh")
+        return self.get_bbox("lbwh")
 
     @property
     def bbox_cxcywh(self) -> List[float]:
@@ -246,7 +247,7 @@ class Skeleton:
         List[float]
             x_center, y_center, width, height
         """
-        return self.get_bbox("blwh")
+        return self.get_bbox("cxcywh")
 
     def get_bbox(self, direction: str, allow_estimation: bool = True) -> List[float]:
         """
