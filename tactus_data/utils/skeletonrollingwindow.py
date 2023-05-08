@@ -113,9 +113,10 @@ class SkeletonRollingWindow:
             the window is not full, returns (False, None)
         """
         if len(self.keypoints_rw) == self.window_size:
-            features = self.keypoints_rw + self.angles_rw + self.velocities_rw
+            features = np.concatenate((np.array(self.keypoints_rw).flatten(),
+                                       np.array(self.angles_rw).flatten(),
+                                       np.array(self.velocities_rw).flatten()))
 
-            features = np.array(features).flatten()
             return True, features
 
         return False, None
