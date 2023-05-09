@@ -97,6 +97,12 @@ class Skeleton:
         if kpts is None:
             return
 
+        # accept one dim list as input
+        if len(kpts) in (26, 34):
+            kpts = list(np.array(kpts).reshape((-1, 2)))
+        if len(kpts) in (29, 51):
+            kpts = list(np.array(kpts).reshape((-1, 3)))
+
         if not check_keypoints(kpts):
             raise ValueError("The provided list is probably not keypoints because "
                              "its length is not 17 nor 14, or each keypoints "
@@ -140,7 +146,7 @@ class Skeleton:
         Tuple[Tuple, Tuple]
             tuple of x, y coordinates ((x1, x2, ...), (y1, y2, ...))
         """
-        return self.keypoints[::2], self.keypoints[1::2]
+        return [xy[0] for xy in self.keypoints], [xy[1] for xy in self.keypoints]
 
     @property
     def height(self) -> float:
