@@ -99,9 +99,9 @@ class Skeleton:
 
         # accept one dim list as input
         if len(kpts) in (26, 34):
-            kpts = list(np.array(kpts).reshape((-1, 2)))
+            kpts = np.array(kpts).reshape((-1, 2)).tolist()
         if len(kpts) in (29, 51):
-            kpts = list(np.array(kpts).reshape((-1, 3)))
+            kpts = np.array(kpts).reshape((-1, 3)).tolist()
 
         if not check_keypoints(kpts):
             raise ValueError("The provided list is probably not keypoints because "
@@ -112,7 +112,7 @@ class Skeleton:
             kpts = king_of_france(kpts)
 
         if has_visibility(kpts):
-            self._keypoints_visibility = kpts[:][2]
+            self._keypoints_visibility = [xyv[2] for xyv in kpts]
             for i in range(len(kpts)):
                 del kpts[i][2]
 
