@@ -4,7 +4,7 @@ A videoCapture API extension that allows for subsampling and threading
 from collections import deque
 from pathlib import Path
 from typing import Union, Literal, Tuple
-from time import time
+from time import time, sleep
 import threading
 import warnings
 
@@ -45,6 +45,7 @@ class VideoCapture:
     def __init__(self,
                  filename: Union[Path, str, int],
                  *,
+                 use_threading: bool = False,
                  target_fps: int = None,
                  stride: int = None,
                  buffer_size: int = 5,
@@ -58,15 +59,17 @@ class VideoCapture:
         self.cap_name = filename
         self.mode = self.get_cap_mode(filename)
 
+        self.frame_count = 0
         self._capture_fps = self.get_capture_fps(capture_fps)
         self.stride = self.get_stride(target_fps, stride)
         self._out_fps = self._capture_fps / self.stride
 
-        self._imgs_queue = Queue(maxlen=buffer_size)
-        self._stop_event = threading.Event()
-        self.frame_count = 0
-        self._thread = threading.Thread(target=self._thread_read)
-        self._thread.start()
+        self.use_threading = use_threading
+        if use_threading:
+            self._imgs_queue = Queue(maxlen=buffer_size)
+            self._stop_event = threading.Event()
+            self._thread = threading.Thread(target=self._thread_read)
+            self._thread.start()
 
         self.drop_warning_enable = drop_warning_enable
 
@@ -166,22 +169,33 @@ class VideoCapture:
 
     def release(self):
         """Closes video file or capturing device."""
-        self._stop_event.set()
         self._cap.release()
-        self._thread.join()
+        if self.use_threading:
+            self._stop_event.set()
+            self._thread.join()
 
     def read(self) -> Tuple[bool, np.ndarray]:
         """
         Grabs, decodes and returns the next subsampled video frame.
         If there is no image in the queue, wait for one to arrive.
         """
-        while self._imgs_queue.is_empty():
-            if self._stop_event.is_set():
-                return None
+        if self.mode == "stream" and self.use_threading:
+            while self._imgs_queue.is_empty():
+                if self._stop_event.is_set():
+                    return None
 
-            continue
+                continue
 
-        return self._imgs_queue.popleft()
+            return self._imgs_queue.popleft()
+        else:
+            _, frame = self._cap.read()
+
+            self.frame_count += 1
+            if self.frame_count % self.stride != 0:
+                return self.read()
+
+            print(self.frame_count)
+            return self.frame_count, frame
 
     def _thread_read(self):
         """
@@ -192,9 +206,6 @@ class VideoCapture:
             ret, frame = self._cap.read()
 
             if ret is False:
-                # stop thread when a video is over
-                if self.mode == "video":
-                    self._stop_event.set()
                 continue
 
             self.frame_count += 1
