@@ -4,9 +4,10 @@ A videoCapture API extension that allows for subsampling and threading
 from collections import deque
 from pathlib import Path
 from typing import Union, Literal, Tuple
-from time import time, sleep
+from time import time
 import threading
 import warnings
+import tqdm
 
 import numpy as np
 import cv2
@@ -41,6 +42,8 @@ class VideoCapture:
         When the buffer is full and a new frame is coming in, a frame
         has to be dropped in order to make space in the buffer.
         By default True.
+    tqdm_progressbar : tqdm.tqdm, optional
+        progress bar to display
     """
     def __init__(self,
                  filename: Union[Path, str, int],
@@ -50,7 +53,8 @@ class VideoCapture:
                  stride: int = None,
                  buffer_size: int = 5,
                  capture_fps: float = None,
-                 drop_warning_enable: bool = True
+                 drop_warning_enable: bool = True,
+                 tqdm_progressbar: tqdm.tqdm = None,
                  ) -> None:
         _filename = filename
         if isinstance(filename, Path):
@@ -70,6 +74,11 @@ class VideoCapture:
             self._stop_event = threading.Event()
             self._thread = threading.Thread(target=self._thread_read)
             self._thread.start()
+
+        self.tqdm = None
+        if isinstance(tqdm_progressbar, tqdm.tqdm):
+            self.tqdm = tqdm_progressbar
+            self.tqdm.total = int(int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1) / self.stride)
 
         self.drop_warning_enable = drop_warning_enable
 
@@ -170,6 +179,8 @@ class VideoCapture:
     def release(self):
         """Closes video file or capturing device."""
         self._cap.release()
+        if self.tqdm is not None:
+            self.tqdm.close()
         if self.use_threading:
             self._stop_event.set()
             self._thread.join()
@@ -186,6 +197,7 @@ class VideoCapture:
 
                 continue
 
+            self.tqdm.update()
             return self._imgs_queue.popleft()
         else:
             _, frame = self._cap.read()
@@ -194,7 +206,7 @@ class VideoCapture:
             if self.frame_count % self.stride != 0:
                 return self.read()
 
-            print(self.frame_count)
+            self.tqdm.update()
             return self.frame_count, frame
 
     def _thread_read(self):
