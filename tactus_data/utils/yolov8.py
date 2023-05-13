@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Dict, List
+from typing import Union, Tuple, List
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +16,7 @@ from tactus_data.utils.skeleton import Skeleton
 
 class Yolov8:
     """custom interface to the yolov8 models"""
-    def __init__(self, model_dir: Path, model_name: str, device: str, half: bool = True) -> None:
+    def __init__(self, model_dir: Path, model_name: str, device: str, half: bool = False) -> None:
         """
         instanciate the model.
 
@@ -38,6 +38,7 @@ class Yolov8:
         self.half = half
         self.model_name = model_name
         self.model = AutoBackend(model_dir / model_name, device=self.device, fp16=half)
+        self.model.eval()
 
     @classmethod
     def download_weights(cls, model_dir: Path, model_name: str):
@@ -103,6 +104,7 @@ class Yolov8:
 
 
 class BboxPredictionYolov8(Yolov8):
+    """yolov8 interface to extract human bboxes from an image"""
     def __call__(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
         return self.predict(img)
 
@@ -144,6 +146,7 @@ class BboxPredictionYolov8(Yolov8):
 
 
 class PosePredictionYolov8(Yolov8):
+    """yolov8 interface to extract pose from an image"""
     def __call__(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
         return self.predict(img)
 
@@ -169,8 +172,9 @@ class PosePredictionYolov8(Yolov8):
                              "without a pose-prediction model.")
 
         _img, img0_size, img_size = self._preprocess_img(img)
+
         preds = super().predict(_img)
-        preds = non_max_suppression(preds, conf_thres=0.25, iou_thres=0.7, classes=None, max_det=1000, nc=1, max_time_img=5)
+        preds = non_max_suppression(preds, conf_thres=0.25, iou_thres=0.7, classes=None, max_det=300, nc=1, max_time_img=5)
 
         results_skeleton = []
         for pred in preds:
@@ -178,7 +182,7 @@ class PosePredictionYolov8(Yolov8):
                 continue
             # scale the prediction back to the input image size
             pred[:, :4] = scale_boxes(img_size, pred[:, :4], img0_size).round()
-            pred_kpts = pred[:, 6:].view(len(pred), *(17, 3)) if len(pred) else pred[:, 6:]
+            pred_kpts = pred[:, 6:].view(len(pred), *(17, 3))
             pred_kpts = scale_coords(img_size, pred_kpts, img0_size).round()
 
             for i, det in enumerate(pred):
