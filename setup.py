@@ -22,7 +22,7 @@ long_description = read("README.md")
 
 install_requires = [
     "requests",
-    "deep-sort-realtime",
+    "deep-sort-realtime @ git+https://github.com/Cranfield-GDP3/deep_sort_realtime",
     "torch",
     "ultralytics",
     "matplotlib",
