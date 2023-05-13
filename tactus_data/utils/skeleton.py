@@ -189,10 +189,13 @@ class Skeleton:
         if x_left > x_right:
             x_left, x_right = x_right, x_left
 
-        if y_bottom > y_top:
+        # the origin is typically at the top left corner of an image.
+        # this means that the bottom of the bbox is supposed to have a
+        # greater y coord than the top
+        if y_bottom < y_top:
             y_bottom, y_top = y_top, y_bottom
 
-        self._boundbing_box_lbrt = value
+        self._boundbing_box_lbrt = (x_left, y_bottom, x_right, y_top)
     bbox = property(None, bbox_setter)
 
     @property
@@ -286,8 +289,8 @@ class Skeleton:
         x_left, y_bottom, x_right, y_top = bbox
 
         if direction.endswith("wh"):
-            width = x_right - x_left
-            height = y_top - y_bottom
+            width = abs(x_right - x_left)
+            height = abs(y_top - y_bottom)
             bbox[2:] = [width, height]
 
         if direction.endswith('rb'):
