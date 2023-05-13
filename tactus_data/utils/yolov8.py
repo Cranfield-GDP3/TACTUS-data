@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import cv2
 
+from ultralytics import YOLO
+from ultralytics.yolo.engine.results import Results
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.yolo.utils import downloads
 from ultralytics.yolo.utils.torch_utils import select_device
@@ -262,6 +264,51 @@ def load_image(image: Union[Path, np.ndarray]) -> np.ndarray:
         return cv2.imread(str(image))
 
     return image
+
+
+class Yolo(YOLO):
+    """raw interface to the yolov8 model."""
+    def __init__(self, model_dir: Path, model_name: str, device: str, half: bool = False) -> None:
+        super().__init__(model_dir / model_name)
+        self.to(device)
+
+    def predict(self, img: Union[Path, np.ndarray]) -> List[Skeleton]:
+        """
+        extract the skeletons from a given image.
+
+        Parameters
+        ----------
+        img : Union[Path, np.ndarray]
+            path to an image, or a numpy array representing the image.
+
+        Returns
+        -------
+        Dict[str, List]
+            return a dictionnary with
+            - `bboxes` list containing every (x1, y1, x2, y2) coordinates.
+            - `scores` list the score for each bounding box.
+            - `keypoints` list containing (x1, y1, is_visible) coordinates.
+        """
+        resultss: List[Results] = super().predict(img)
+
+        results_skeleton = []
+        for results in resultss:
+            bboxes = results.boxes
+            keypoints = results.keypoints
+
+            for i_result in range(len(bboxes)):
+                print(bboxes[i_result])
+                bbox_lbrt = bboxes[i_result][:4]
+                score = bboxes[i_result][4]
+                skeleton_keypoints = keypoints[i_result]
+
+                skeleton = Skeleton(bbox_lbrt=bbox_lbrt,
+                                    score=score,
+                                    keypoints=skeleton_keypoints)
+
+                results_skeleton.append(skeleton)
+
+        return results_skeleton
 
 
 model_name_to_url = {
