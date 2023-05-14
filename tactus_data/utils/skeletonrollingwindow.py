@@ -59,6 +59,10 @@ class SkeletonRollingWindow:
         """return wether or not the last entry is a duplicated entry."""
         return self.is_duplicated_rw[-1]
 
+    def is_complete(self) -> bool:
+        """return true if the rolling window is full"""
+        return len(self.keypoints_rw) == self.window_size
+
     def _add_keypoints(self, skeleton: Skeleton) -> List[float]:
         """add relative keypoints to the rolling window"""
         self._add_height(skeleton.height)
@@ -101,22 +105,17 @@ class SkeletonRollingWindow:
 
         return velocity
 
-    def get_features(self) -> Tuple[bool, np.ndarray]:
+    def get_features(self) -> np.ndarray:
         """
         return the keypoints, angles and velocities for a skeleton
-        only if the window is full
 
         Returns
         -------
-        (success, features) : bool, np.ndarray
-            return the success and the features as an numpy array. if
-            the window is not full, returns (False, None)
+        features : np.ndarray
+            return the features as an numpy array.
         """
-        if len(self.keypoints_rw) == self.window_size:
-            features = np.concatenate((np.array(self.keypoints_rw).flatten(),
-                                       np.array(self.angles_rw).flatten(),
-                                       np.array(self.velocities_rw).flatten()))
+        features = np.concatenate((np.array(self.keypoints_rw).flatten(),
+                                   np.array(self.angles_rw).flatten(),
+                                   np.array(self.velocities_rw).flatten()))
 
-            return True, features
-
-        return False, None
+        return features
