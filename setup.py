@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(rel_path: str) -> str:
@@ -47,7 +47,7 @@ setup(
     version=get_version("tactus_data/__init__.py"),
     description="Threatening activities classification toward users' security",
     long_description=long_description,
-    packages=['tactus_data'],
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Beta",
         "Intended Audience :: Developers",
