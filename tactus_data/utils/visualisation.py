@@ -18,6 +18,11 @@ body_joint_colors = [(19, 234, 201), (4, 216, 178),   # ankles to knees
                      (239, 230, 59), (237, 193, 64),  # shoulders to neck
                      ]
 
+RED = (0, 0, 204)
+GREEN = (0, 153, 0)
+GREY = (128, 128, 128)
+WHITE = (255, 255, 255)
+
 
 def plot_bbox(image: np.ndarray,
               skeleton: Skeleton,
@@ -58,10 +63,18 @@ def plot_bbox(image: np.ndarray,
                           color=color, thickness=thickness)
 
     if label is not None:
-        x_left_text = int(x_left + 7)
-        y_top_text = int(y_top - 4)
-        image = cv2.putText(image, label, (x_left_text, y_top_text),
-                            fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=fontScale, color=color)
+        (txt_w, txt_h), baseline = cv2.getTextSize(label,
+                                                   cv2.FONT_HERSHEY_PLAIN,
+                                                   fontScale=fontScale, thickness=2)
+
+        image = cv2.rectangle(image,
+                              (x_left, y_top),
+                              (x_left + txt_w, y_top - txt_h - baseline),
+                              color=color, thickness=-1)
+
+        image = cv2.putText(image, label, (x_left, y_top),
+                            fontFace=cv2.FONT_HERSHEY_PLAIN,
+                            fontScale=fontScale, color=WHITE, thickness=2)
 
     return image
 
