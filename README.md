@@ -1,26 +1,24 @@
-<br />
-<div align="center">
-  <h1>TACTUS - data pipeline</h1>
-  <h3>Threatening activities classification toward users' security</h3>
-</div>
+# TACTUS - data pipeline
 
-# Useful ressources
+> Threatening activities classification toward users' security
+
+## Useful ressources
 
 - [Write a better commit message](https://gist.github.com/MarcBresson/dd57a17f2ae60b6cb8688ee64cd7671d)
 - [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/)
 
-# Installation
+## Installation
 
-## Hardware accelerated Torch
+### Hardware accelerated Torch
 
 You can install torch and torchvision **with cuda** via pip. Get the pip install command from [the official website](https://pytorch.org/get-started/locally/).
 
-## tactus-data
+### tactus-data
 
 You can create an editable install of this library ([see more](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)) with the following command:
 
 ```bash
-python -m pip install -e .
+python -m pip install tactus_data
 ```
 
 The library will be added to your Python's import path and  you will be able to import this package from anywhere using
@@ -29,7 +27,7 @@ The library will be added to your Python's import path and  you will be able to 
 import tactus_data
 ```
 
-# Data sources
+## Data sources
 
 |name    |description     |url    |handled in the data pipeline|
 |--------|----------------|-------|----------------------------|
