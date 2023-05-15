@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(rel_path: str) -> str:
@@ -22,10 +22,9 @@ long_description = read("README.md")
 
 install_requires = [
     "requests",
-    "cython",
-    "deep-sort-realtime",
+    "deep-sort-realtime @ git+https://github.com/Cranfield-GDP3/deep_sort_realtime",
     "torch",
-    "tactus-yolov7 @ git+https://github.com/Cranfield-GDP3/yolov7.git",
+    "ultralytics",
     "matplotlib",
     "Pillow",
     "numpy",
@@ -48,7 +47,7 @@ setup(
     version=get_version("tactus_data/__init__.py"),
     description="Threatening activities classification toward users' security",
     long_description=long_description,
-    packages=['tactus_data'],
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Beta",
         "Intended Audience :: Developers",

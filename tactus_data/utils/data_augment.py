@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 from sklearn.model_selection._search import ParameterGrid
 
-from tactus_data.utils.skeletonization import skeleton_bbx, round_keypoints
+from tactus_data.utils.skeleton import Skeleton
 
 
 DEFAULT_GRID = {
@@ -23,17 +23,7 @@ DEFAULT_GRID = {
 }
 
 
-def _skel_width_height(keypoints: list):
-    """Used by noise_2d(): Returns the max width and height of
-       skeletons keypoints
-    """
-    _, _, width, height = skeleton_bbx(keypoints)
-    xscale = width / 100
-    yscale = height / 100
-    return xscale, yscale
-
-
-def augment_noise_2d(keypoints: list, noise_amplitude: float) -> np.ndarray:
+def augment_noise_2d(keypoints: list, noise_amplitude: float, width: float, height: float) -> np.ndarray:
     """
     add noise to every keypoints of a skeleton
 
@@ -50,7 +40,8 @@ def augment_noise_2d(keypoints: list, noise_amplitude: float) -> np.ndarray:
     np.ndarray
         list of all the new skeleton keypoints
     """
-    xscale, yscale = _skel_width_height(keypoints)
+    xscale = width / 100
+    yscale = height / 100
 
     for i in range(0, len(keypoints), 2):
         keypoints[i] += noise_amplitude * xscale * (random.random() * 2 - 1)
@@ -77,7 +68,7 @@ def augment_transform(keypoints: list, transform_mat: np.ndarray) -> np.ndarray:
     """
     keypoints = np.array(keypoints, dtype="float").reshape((1, -1, 2))
     keypoints = cv2.perspectiveTransform(keypoints, transform_mat)
-    return keypoints.flatten()
+    return keypoints.flatten().tolist()
 
 
 def transform_matrix_from_grid(
@@ -180,7 +171,7 @@ def get_transform_matrix(resolution: Tuple[int, int],
     return M_final
 
 
-def augment_skeleton(keypoints: list,
+def augment_skeleton(skeleton: Skeleton,
                      matrix: np.ndarray,
                      noise_amplitude: float = 0,
                      ) -> list:
@@ -201,11 +192,16 @@ def augment_skeleton(keypoints: list,
     list
         the augmented skeleton
     """
-    keypoints = augment_transform(keypoints, matrix)
-    keypoints = augment_noise_2d(keypoints, noise_amplitude)
-    keypoints = round_keypoints(keypoints)
+    keypoints = skeleton.keypoints
 
-    return keypoints.tolist()
+    keypoints = augment_transform(keypoints, matrix)
+
+    width = skeleton.width
+    height = skeleton.height
+    keypoints = augment_noise_2d(keypoints, noise_amplitude, width, height)
+
+    skeleton = Skeleton(keypoints=keypoints)
+    return skeleton
 
 
 def grid_augment(formatted_json: Path,
@@ -271,9 +267,12 @@ def grid_augment_generator(
         augmented_json = copy.deepcopy(formatted_json)
         for frame in augmented_json["frames"]:
             for skeleton in frame["skeletons"]:
-                skeleton["keypoints"] = augment_skeleton(skeleton["keypoints"],
-                                                         matrix,
-                                                         noise_amplitude)
+                if isinstance(skeleton, Dict):
+                    skeleton = Skeleton(keypoints=skeleton["keypoints"])
+
+                skeleton = augment_skeleton(skeleton,
+                                            matrix,
+                                            noise_amplitude)
 
         augmented_json["augmentation"] = params
 
