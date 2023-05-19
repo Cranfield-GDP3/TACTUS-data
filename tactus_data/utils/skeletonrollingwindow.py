@@ -44,7 +44,7 @@ class SkeletonRollingWindow:
 
         return normalized_keypoints, angles, velocities
 
-    def duplicate_last_entry(self, new_bbox_lbrt: Tuple[float, float, float, float]):
+    def duplicate_last_entry(self, new_bbox_lbrt: Tuple[float, float, float, float]) -> Skeleton:
         """
         duplicate the last entry of the rolling window.
         """
@@ -54,6 +54,8 @@ class SkeletonRollingWindow:
         self.angles_rw.append(self.angles_rw[-1])
         self.velocities_rw.append(self.velocities_rw[-1])
         self.is_duplicated_rw.append(True)
+
+        return self.skeleton
 
     def is_duplicated(self) -> bool:
         """return wether or not the last entry is a duplicated entry."""
