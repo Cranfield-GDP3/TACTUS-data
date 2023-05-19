@@ -64,7 +64,7 @@ def plot_bbox(image: np.ndarray,
 
     if label is not None:
         (txt_w, txt_h), baseline = cv2.getTextSize(label,
-                                                   cv2.FONT_HERSHEY_PLAIN,
+                                                   cv2.FONT_HERSHEY_SIMPLEX,
                                                    fontScale=fontScale, thickness=2)
 
         image = cv2.rectangle(image,
@@ -73,7 +73,7 @@ def plot_bbox(image: np.ndarray,
                               color=color, thickness=-1)
 
         image = cv2.putText(image, label, (x_left, y_top),
-                            fontFace=cv2.FONT_HERSHEY_PLAIN,
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale=fontScale, color=WHITE, thickness=2)
 
     return image
