@@ -15,6 +15,8 @@ from tactus_data.utils.skeleton import Skeleton
 DEFAULT_GRID = {
     "noise_amplitude": np.linspace(1, 4, 2),
     "horizontal_flip": [True, False],
+    "vertical_flip": [True, False],
+    "skeleton_flip": [True, False],
     "rotation_y": np.linspace(-20, 20, 3),
     "rotation_z": np.linspace(-20, 20, 3),
     "rotation_x": np.linspace(-20, 20, 3),
