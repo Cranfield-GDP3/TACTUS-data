@@ -98,6 +98,7 @@ def transform_matrix_from_grid(
 def get_transform_matrix(resolution: Tuple[int, int],
                          horizontal_flip: bool = False,
                          vertical_flip: bool = False,
+                         skeleton_flip: bool = False,
                          rotation_x: float = 0,
                          rotation_y: float = 0,
                          rotation_z: float = 0,
@@ -106,6 +107,10 @@ def get_transform_matrix(resolution: Tuple[int, int],
                          **_
                          ):
     """Create the transform matrix using cartesian dimension"""
+    # skeleton flip
+    if skeleton_flip:
+        horizontal_flip = not horizontal_flip
+        rotation_y += 180
     # split input
     h_flip_coef = -1 if horizontal_flip else 1
     v_flip_coef = -1 if vertical_flip else 1
